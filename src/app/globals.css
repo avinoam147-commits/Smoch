@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f0eee8;
+  --ink: #1a1a17;
+  --muted: #6b6a63;
+  --line: #e4e1d8;
+  --accent: #0e6b5c;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3f1ed;
+
+  --tone-great: #0e7a4f;
+  --tone-good: #5a9a2a;
+  --tone-mixed: #c08a10;
+  --tone-poor: #d0611f;
+  --tone-bad: #c2362f;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121211;
+    --surface: #1b1b19;
+    --surface-2: #242421;
+    --ink: #eeede8;
+    --muted: #a3a29a;
+    --line: #2f2f2b;
+    --accent: #3fb59c;
+    --accent-ink: #0b1f1a;
+    --accent-soft: #17312b;
+
+    --tone-great: #35b97c;
+    --tone-good: #8cc35a;
+    --tone-mixed: #e0aa35;
+    --tone-poor: #ec8448;
+    --tone-bad: #ec6a62;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-great: var(--tone-great);
+  --color-good: var(--tone-good);
+  --color-mixed: var(--tone-mixed);
+  --color-poor: var(--tone-poor);
+  --color-bad: var(--tone-bad);
+  --font-sans: var(--font-heebo), system-ui, sans-serif;
+  --ease-snappy: var(--ease-out);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* כפתורים ואלמנטים לחיצים: משוב לחיצה עדין */
+.pressable {
+  transition:
+    transform 160ms var(--ease-out),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+  user-select: none;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* כניסה מדורגת לרשימות */
+.stagger > * {
+  animation: rise 360ms var(--ease-out) both;
+}
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* מופע של הודעות ומצבים חדשים */
+.appear {
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 220ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > * {
+    animation: fade 200ms ease both;
+  }
+  .appear {
+    transition: opacity 200ms ease;
+    @starting-style {
+      transform: none;
+    }
+  }
+  .pressable:active {
+    transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
