@@ -1,4 +1,4 @@
-import { BadgeCheck, Building2, MessageSquareReply } from "lucide-react";
+import { BadgeCheck, Building2, MessageSquareReply, ShieldCheck } from "lucide-react";
 
 export function VerifiedPurchase() {
   return (
@@ -9,11 +9,23 @@ export function VerifiedPurchase() {
   );
 }
 
+export function StaffBadge() {
+  return (
+    <span
+      title="הביקורת הוזנה על ידי צוות האתר, למשל בהעברה מאתר אחר באישור הכותב"
+      className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-muted"
+    >
+      <ShieldCheck className="size-3.5" aria-hidden />
+      הוזנה על ידי הצוות
+    </span>
+  );
+}
+
 export function RegistryBadge({ verified }: { verified: boolean }) {
   return verified ? (
     <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">
       <Building2 className="size-3.5" aria-hidden />
-      רשומה ברשם החברות
+      אומתה מול רשם החברות
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted">

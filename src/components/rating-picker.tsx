@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Star } from "lucide-react";
-import { scoreTone } from "@/lib/data";
+import { scoreTone } from "@/lib/format";
 
 const labels = ["", "גרוע", "חלש", "בסדר", "טוב", "מצוין"];
 const fills: Record<string, string> = {

@@ -1,17 +1,27 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { BadgeCheck, MessageSquareReply, ShieldCheck } from "lucide-react";
-import { categories, companies, recentReviews, trustScore, type CategoryId } from "@/lib/data";
+import { categories, categoryIds } from "@/lib/format";
+import { getPublishedCompanies, getRecentReviews } from "@/lib/queries";
 import { SearchBox } from "@/components/search-box";
 import { CompanyCard } from "@/components/company-card";
 import { ReviewCard } from "@/components/review-card";
+import { AccountDeletedNotice } from "@/components/account-deleted-notice";
 
-export default function Home() {
-  const ranked = [...companies].sort((a, b) => trustScore(b) - trustScore(a));
+export default async function Home() {
+  const [companies, recent] = await Promise.all([getPublishedCompanies(), getRecentReviews(4)]);
+  // Only companies with enough reviews to mean something appear in the rankings.
+  const ranked = companies
+    .filter((c) => c.stats.reviewCount >= 3)
+    .sort((a, b) => b.stats.trustScore - a.stats.trustScore);
   const top = ranked.slice(0, 3);
-  const lowest = ranked.slice(-3).reverse();
+  const lowest = ranked.length > 3 ? ranked.slice(-3).reverse() : [];
 
   return (
     <>
+      <Suspense>
+        <AccountDeletedNotice />
+      </Suspense>
       <section className="mx-auto max-w-6xl px-4 pt-14 pb-12 sm:pt-20">
         <div className="max-w-2xl">
           <p className="mb-4 inline-flex rounded-full border border-line bg-surface px-3 py-1 text-sm text-muted">
@@ -31,7 +41,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(categories) as CategoryId[]).map((id) => (
+          {categoryIds.map((id) => (
             <Link
               key={id}
               href={`/companies?category=${id}`}
@@ -43,23 +53,53 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto mt-14 max-w-6xl px-4">
-        <SectionHeading title="הכי מומלצים" href="/companies?sort=top" />
-        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {top.map((c) => (
-            <CompanyCard key={c.slug} company={c} />
-          ))}
-        </div>
-      </section>
+      {top.length > 0 && (
+        <section className="mx-auto mt-14 max-w-6xl px-4">
+          <SectionHeading title="הכי מומלצים" href="/companies?sort=top" />
+          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {top.map((c) => (
+              <CompanyCard key={c.slug} company={c} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section className="mx-auto mt-14 max-w-6xl px-4">
-        <SectionHeading title="הדירוג הנמוך ביותר" href="/companies?sort=low" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {lowest.map((c) => (
-            <CompanyCard key={c.slug} company={c} />
-          ))}
-        </div>
-      </section>
+      {lowest.length > 0 && (
+        <section className="mx-auto mt-14 max-w-6xl px-4">
+          <SectionHeading title="הדירוג הנמוך ביותר" href="/companies?sort=low" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {lowest.map((c) => (
+              <CompanyCard key={c.slug} company={c} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {companies.length === 0 && (
+        <section className="mx-auto mt-14 max-w-6xl px-4">
+          <div className="rounded-2xl border border-dashed border-line p-10 text-center">
+            <p className="font-semibold">עדיין אין חברות באתר</p>
+            <p className="mt-1 text-sm text-muted">מכירים קורס מסחר או קבוצת איתותים? הוסיפו אותם ראשונים.</p>
+            <Link
+              href="/add-company"
+              className="pressable mt-5 inline-flex rounded-xl bg-accent px-5 py-2.5 font-medium text-accent-ink"
+            >
+              הוספת חברה
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {ranked.length === 0 && companies.length > 0 && (
+        <section className="mx-auto mt-14 max-w-6xl px-4">
+          <SectionHeading title="חברות באתר" href="/companies" />
+          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {companies.slice(0, 6).map((c) => (
+              <CompanyCard key={c.slug} company={c} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto mt-20 max-w-6xl px-4">
         <h2 className="text-2xl font-bold tracking-tight">למה לסמוך על סמוך</h2>
@@ -82,14 +122,16 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto mt-20 max-w-6xl px-4">
-        <h2 className="mb-6 text-2xl font-bold tracking-tight">ביקורות אחרונות</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          {recentReviews(4).map((r) => (
-            <ReviewCard key={r.id} review={r} company={r.company} showCompany />
-          ))}
-        </div>
-      </section>
+      {recent.length > 0 && (
+        <section className="mx-auto mt-20 max-w-6xl px-4">
+          <h2 className="mb-6 text-2xl font-bold tracking-tight">ביקורות אחרונות</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {recent.map((r) => (
+              <ReviewCard key={r.id} review={r} company={r.company} showCompany />
+            ))}
+          </div>
+        </section>
+      )}
     </>
   );
 }

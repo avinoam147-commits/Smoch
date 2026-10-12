@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import { scoreTone, type Tone } from "@/lib/data";
+import { scoreTone, type Tone } from "@/lib/format";
 
 const toneFill: Record<Tone, string> = {
   great: "bg-great",
@@ -28,10 +28,7 @@ export function Stars({ value, size = "md" }: { value: number; size?: "sm" | "md
         const fill = Math.max(0, Math.min(1, value - i));
         return (
           <span key={i} className={`relative grid ${box} place-items-center overflow-hidden rounded-[5px] bg-line`}>
-            <span
-              className={`absolute inset-y-0 start-0 ${toneFill[tone]}`}
-              style={{ width: `${fill * 100}%` }}
-            />
+            <span className={`absolute inset-y-0 start-0 ${toneFill[tone]}`} style={{ width: `${fill * 100}%` }} />
             <Star className={`relative ${icon} fill-white stroke-none`} />
           </span>
         );

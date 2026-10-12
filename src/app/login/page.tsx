@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { Logo } from "@/components/logo";
-import { LoginCard } from "./login-card";
+import { LoginOptions } from "./login-options";
 
-export const metadata: Metadata = { title: "התחברות" };
+export const metadata: Metadata = { title: "התחברות", robots: { index: false } };
 
 export default function LoginPage() {
   return (
@@ -12,10 +13,21 @@ export default function LoginPage() {
         <Logo className="justify-center" />
         <h1 className="mt-6 text-2xl font-bold tracking-tight">התחברות לסמוך</h1>
         <p className="mt-2 text-sm text-muted">כדי לכתוב ביקורות, להוסיף חברות ולסמן ביקורות כמועילות.</p>
-        <LoginCard />
+        <div className="mt-6">
+          <Suspense fallback={<div className="h-12 rounded-xl bg-surface-2" />}>
+            <LoginOptions />
+          </Suspense>
+        </div>
         <p className="mt-6 text-xs leading-relaxed text-muted">
-          בהתחברות את/ה מסכים/ה ל<Link href="/guidelines" className="underline">כללי האתר</Link>. נציג רק שם פרטי
-          ואות ראשונה משם המשפחה.
+          בהתחברות את/ה מסכים/ה ל
+          <Link href="/terms" className="underline">
+            תנאי השימוש
+          </Link>{" "}
+          ול
+          <Link href="/privacy" className="underline">
+            מדיניות הפרטיות
+          </Link>
+          . באתר יוצגו רק השם הפרטי והאות הראשונה של שם המשפחה. כתובת המייל לא מתפרסמת.
         </p>
       </div>
     </div>

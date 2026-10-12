@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { categories, companies, reviewCount, trustScore, type CategoryId } from "@/lib/data";
+import { categories, categoryIds, isCategory } from "@/lib/format";
+import type { Company } from "@/lib/types";
 import { CompanyCard } from "@/components/company-card";
 import { SearchBox } from "@/components/search-box";
 
@@ -14,14 +15,17 @@ const sortLabels: Record<Sort, string> = {
   reviews: "הכי הרבה ביקורות",
 };
 
-export function CompaniesBrowser() {
+export function CompaniesBrowser({ companies }: { companies: Company[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const q = params.get("q")?.trim() ?? "";
-  const category = params.get("category") as CategoryId | null;
-  const sort = (params.get("sort") as Sort | null) ?? "top";
+  const rawCategory = params.get("category");
+  const category = isCategory(rawCategory) ? rawCategory : null;
+  const rawSort = params.get("sort");
+  const sort: Sort = rawSort === "low" || rawSort === "reviews" ? rawSort : "top";
+  const needle = q.toLowerCase();
 
   const setParam = (key: string, value: string | null) => {
     const next = new URLSearchParams(params);
@@ -32,11 +36,18 @@ export function CompaniesBrowser() {
 
   const results = companies
     .filter((c) => !category || c.category === category)
-    .filter((c) => !q || `${c.name} ${c.tagline} ${c.registryId}`.includes(q))
+    .filter(
+      (c) =>
+        !needle || `${c.name} ${c.tagline} ${c.registryId ?? ""} ${c.website ?? ""}`.toLowerCase().includes(needle),
+    )
     .sort((a, b) => {
-      if (sort === "low") return trustScore(a) - trustScore(b);
-      if (sort === "reviews") return reviewCount(b) - reviewCount(a);
-      return trustScore(b) - trustScore(a);
+      // Companies without reviews always sink to the bottom of score sorts.
+      const ra = a.stats.reviewCount > 0,
+        rb = b.stats.reviewCount > 0;
+      if (sort !== "reviews" && ra !== rb) return ra ? -1 : 1;
+      if (sort === "low") return a.stats.trustScore - b.stats.trustScore;
+      if (sort === "reviews") return b.stats.reviewCount - a.stats.reviewCount;
+      return b.stats.trustScore - a.stats.trustScore;
     });
 
   return (
@@ -50,7 +61,7 @@ export function CompaniesBrowser() {
           <Chip active={!category} onClick={() => setParam("category", null)}>
             הכל
           </Chip>
-          {(Object.keys(categories) as CategoryId[]).map((id) => (
+          {categoryIds.map((id) => (
             <Chip key={id} active={category === id} onClick={() => setParam("category", id)}>
               {categories[id].label}
             </Chip>

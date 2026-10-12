@@ -1,130 +1,182 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { CalendarDays, ExternalLink, Hash, MapPin, PenLine, Wallet } from "lucide-react";
-import {
-  categories,
-  companies,
-  getCompany,
-  rawAverage,
-  reviewCount,
-  scoreTone,
-  trustScore,
-} from "@/lib/data";
+import { CalendarDays, ExternalLink, Hash, MapPin, PenLine, Wallet, AtSign } from "lucide-react";
+import { categories, displayHost, externalHref, scoreTone } from "@/lib/format";
+import { getCompanyBySlug, getCompanyReviews, getStaticCompanySlugs } from "@/lib/queries";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { siteUrl } from "@/lib/site";
+import type { Company, Review } from "@/lib/types";
 import { CompanyMark } from "@/components/company-card";
 import { Stars, toneText } from "@/components/stars";
 import { ClaimedBadge, RegistryBadge } from "@/components/badges";
+import { CompanyViewerProvider } from "@/components/viewer-context";
 import { ReviewsSection } from "./reviews-section";
 
-export function generateStaticParams() {
-  return companies.map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  return getStaticCompanySlugs();
 }
 
 export async function generateMetadata({ params }: PageProps<"/company/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const company = getCompany(slug);
-  if (!company) return {};
+  const company = await getCompanyBySlug(decodeURIComponent(slug));
+  if (!company) return { title: "החברה לא נמצאה" };
+  const { reviewCount, trustScore } = company.stats;
   return {
     title: `${company.name}: ביקורות ודירוג`,
-    description: `${reviewCount(company)} ביקורות על ${company.name}. ציון אמינות ${trustScore(company).toFixed(1)} מתוך 5.`,
+    description:
+      reviewCount > 0
+        ? `${reviewCount} ביקורות על ${company.name}. ציון אמינות ${trustScore.toFixed(1)} מתוך 5. ${company.tagline}`
+        : `ביקורות ודירוג על ${company.name}. ${company.tagline}`,
+    alternates: { canonical: `/company/${company.slug}` },
   };
 }
 
-export default async function CompanyPage({ params }: PageProps<"/company/[slug]">) {
-  const { slug } = await params;
-  const company = getCompany(slug);
-  if (!company) notFound();
+export default function CompanyPage({ params }: PageProps<"/company/[slug]">) {
+  return (
+    <Suspense fallback={<CompanySkeleton />}>
+      <CompanyContent params={params} />
+    </Suspense>
+  );
+}
 
-  const score = trustScore(company);
-  const { tone, label } = scoreTone(score);
-  const total = reviewCount(company);
+async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">["params"] }) {
+  const { slug } = await params;
+  const company = await getCompanyBySlug(decodeURIComponent(slug));
+  if (!company) notFound();
+  const reviews = await getCompanyReviews(company.id);
+
+  const { reviewCount, trustScore, rawAverage, distribution } = company.stats;
+  const { tone, label } = scoreTone(trustScore);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8">
-      <nav className="text-sm text-muted" aria-label="פירורי לחם">
-        <Link href="/companies" className="hover:text-ink">כל החברות</Link>
-        <span className="mx-2">/</span>
-        <Link href={`/companies?category=${company.category}`} className="hover:text-ink">
-          {categories[company.category].label}
-        </Link>
-      </nav>
+    <CompanyViewerProvider companyId={company.id} enabled={isSupabaseConfigured}>
+      <JsonLd company={company} reviews={reviews} />
+      <div className="mx-auto max-w-6xl px-4 pt-8">
+        <nav className="text-sm text-muted" aria-label="פירורי לחם">
+          <Link href="/companies" className="hover:text-ink">
+            כל החברות
+          </Link>
+          <span className="mx-2">/</span>
+          <Link href={`/companies?category=${company.category}`} className="hover:text-ink">
+            {categories[company.category].label}
+          </Link>
+        </nav>
 
-      <section className="mt-5 rounded-3xl border border-line bg-surface p-6 sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex gap-4">
-            <CompanyMark name={company.name} size="lg" />
-            <div className="min-w-0">
-              <h1 className="text-3xl font-extrabold tracking-tight text-balance">{company.name}</h1>
-              <p className="mt-1 text-muted">{company.tagline}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <RegistryBadge verified={company.registryVerified} />
-                <ClaimedBadge claimed={company.claimed} />
+        <section className="mt-5 rounded-3xl border border-line bg-surface p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 gap-4">
+              <CompanyMark name={company.name} logoUrl={company.logoUrl} size="lg" />
+              <div className="min-w-0">
+                <h1 className="text-3xl font-extrabold tracking-tight text-balance break-words">{company.name}</h1>
+                {company.tagline && <p className="mt-1 text-muted">{company.tagline}</p>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <RegistryBadge verified={company.registryVerified} />
+                  <ClaimedBadge claimed={company.claimed} />
+                </div>
               </div>
             </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
+              <Link
+                href={`/company/${company.slug}/review`}
+                className="pressable inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 font-medium text-accent-ink hover:opacity-90"
+              >
+                <PenLine className="size-4" aria-hidden />
+                כתיבת ביקורת
+              </Link>
+              {company.website && (
+                <a
+                  href={externalHref(company.website)}
+                  target="_blank"
+                  rel="noopener nofollow ugc"
+                  className="pressable inline-flex items-center justify-center gap-2 rounded-xl border border-line px-6 py-3 font-medium hover:border-ink/30"
+                >
+                  לאתר החברה
+                  <ExternalLink className="size-4" aria-hidden />
+                </a>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-stretch">
-            <Link
-              href={`/company/${company.slug}/review`}
-              className="pressable inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 font-medium text-accent-ink hover:opacity-90"
-            >
-              <PenLine className="size-4" aria-hidden />
-              כתיבת ביקורת
-            </Link>
-            <a
-              href={`https://${company.website}`}
-              target="_blank"
-              rel="noopener nofollow"
-              className="pressable inline-flex items-center justify-center gap-2 rounded-xl border border-line px-6 py-3 font-medium hover:border-ink/30"
-            >
-              לאתר החברה
-              <ExternalLink className="size-4" aria-hidden />
-            </a>
+          <div className="mt-8 grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+            {reviewCount > 0 ? (
+              <div>
+                <p className="text-sm text-muted">ציון אמינות</p>
+                <div className="mt-1 flex items-baseline gap-3">
+                  <span className="text-5xl font-extrabold tabular-nums">{trustScore.toFixed(1)}</span>
+                  <span className={`text-xl font-semibold ${toneText[tone]}`}>{label}</span>
+                </div>
+                <div className="mt-3">
+                  <Stars value={trustScore} size="lg" />
+                </div>
+                <p className="mt-3 text-sm text-muted">
+                  מבוסס על {reviewCount.toLocaleString("he-IL")} ביקורות. ממוצע גולמי {rawAverage.toFixed(2)}.{" "}
+                  <Link href="/guidelines#score" className="text-accent hover:underline">
+                    איך מחושב הציון?
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-muted">ציון אמינות</p>
+                <p className="mt-2 text-xl font-semibold">אין עדיין ביקורות</p>
+                <p className="mt-1 text-sm text-muted">הציון יופיע אחרי הביקורת הראשונה.</p>
+              </div>
+            )}
+            <Distribution distribution={distribution} total={reviewCount} />
           </div>
+        </section>
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <ReviewsSection company={{ slug: company.slug, name: company.name }} reviews={reviews} />
+
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-2xl border border-line bg-surface p-5">
+              <h2 className="font-semibold">על החברה</h2>
+              {company.about && (
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted">{company.about}</p>
+              )}
+              <dl className="mt-4 space-y-3 text-sm">
+                {company.registryId && (
+                  <Fact icon={<Hash className="size-4" />} label="ח.פ. / ע.מ." value={company.registryId} />
+                )}
+                {company.priceRange && (
+                  <Fact icon={<Wallet className="size-4" />} label="טווח מחירים" value={company.priceRange} />
+                )}
+                {company.city && <Fact icon={<MapPin className="size-4" />} label="מיקום" value={company.city} />}
+                {company.founded && (
+                  <Fact icon={<CalendarDays className="size-4" />} label="פעילה משנת" value={String(company.founded)} />
+                )}
+                {company.website && (
+                  <Fact icon={<ExternalLink className="size-4" />} label="אתר" value={displayHost(company.website)} />
+                )}
+                {company.socialUrl && (
+                  <Fact
+                    icon={<AtSign className="size-4" />}
+                    label="רשת חברתית"
+                    value={displayHost(company.socialUrl)}
+                  />
+                )}
+              </dl>
+            </div>
+            {!company.claimed && (
+              <div className="rounded-2xl border border-dashed border-line p-5 text-sm">
+                <p className="font-semibold">זו החברה שלך?</p>
+                <p className="mt-1 text-muted">אפשר לאמת בעלות ולהגיב לביקורות בפומבי. ההצטרפות לא משפיעה על הציון.</p>
+                <Link
+                  href={`/company/${company.slug}/claim`}
+                  className="pressable mt-3 inline-flex rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:border-ink/30"
+                >
+                  בקשת ניהול הדף
+                </Link>
+              </div>
+            )}
+          </aside>
         </div>
-
-        <div className="mt-8 grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-          <div>
-            <p className="text-sm text-muted">ציון אמינות</p>
-            <div className="mt-1 flex items-baseline gap-3">
-              <span className="text-5xl font-extrabold tabular-nums">{score.toFixed(1)}</span>
-              <span className={`text-xl font-semibold ${toneText[tone]}`}>{label}</span>
-            </div>
-            <div className="mt-3">
-              <Stars value={score} size="lg" />
-            </div>
-            <p className="mt-3 text-sm text-muted">
-              מבוסס על {total.toLocaleString("he-IL")} ביקורות. ממוצע גולמי {rawAverage(company).toFixed(2)}.{" "}
-              <Link href="/guidelines#score" className="text-accent hover:underline">איך מחושב הציון?</Link>
-            </p>
-          </div>
-          <Distribution distribution={company.distribution} total={total} />
-        </div>
-      </section>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <ReviewsSection company={company} />
-
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <h2 className="font-semibold">על החברה</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{company.about}</p>
-            <dl className="mt-4 space-y-3 text-sm">
-              <Fact icon={<Hash className="size-4" />} label="ח.פ. / ע.מ." value={company.registryId} />
-              <Fact icon={<Wallet className="size-4" />} label="טווח מחירים" value={company.priceRange} />
-              <Fact icon={<MapPin className="size-4" />} label="מיקום" value={company.city} />
-              <Fact icon={<CalendarDays className="size-4" />} label="פעילה משנת" value={String(company.founded)} />
-            </dl>
-          </div>
-          {!company.claimed && (
-            <div className="rounded-2xl border border-dashed border-line p-5 text-sm">
-              <p className="font-semibold">זו החברה שלך?</p>
-              <p className="mt-1 text-muted">אפשר לאמת בעלות ולהגיב לביקורות בפומבי. ההצטרפות לא משפיעה על הציון.</p>
-            </div>
-          )}
-        </aside>
       </div>
-    </div>
+    </CompanyViewerProvider>
   );
 }
 
@@ -151,9 +203,64 @@ function Distribution({ distribution, total }: { distribution: number[]; total: 
 function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-muted" aria-hidden>{icon}</span>
-      <dt className="text-muted">{label}</dt>
-      <dd className="ms-auto font-medium" dir="auto">{value}</dd>
+      <span className="text-muted" aria-hidden>
+        {icon}
+      </span>
+      <dt className="shrink-0 text-muted">{label}</dt>
+      <dd className="ms-auto truncate font-medium" dir="auto">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function JsonLd({ company, reviews }: { company: Company; reviews: Review[] }) {
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: company.name,
+    url: company.website ? externalHref(company.website) : `${siteUrl}/company/${company.slug}`,
+    description: company.tagline || undefined,
+    ...(company.logoUrl && { logo: company.logoUrl }),
+  };
+  if (company.stats.reviewCount > 0) {
+    data.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: company.stats.rawAverage.toFixed(1),
+      reviewCount: company.stats.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+    data.review = reviews.slice(0, 5).map((r) => ({
+      "@type": "Review",
+      author: { "@type": "Person", name: r.authorName },
+      datePublished: r.createdAt.slice(0, 10),
+      name: r.title,
+      reviewBody: r.body,
+      reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+    }));
+  }
+  return (
+    <script
+      type="application/ld+json"
+      // JSON-LD must be inline; "<" is escaped so review text can't close the tag.
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
+    />
+  );
+}
+
+function CompanySkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl animate-pulse px-4 pt-8" aria-busy>
+      <div className="h-4 w-40 rounded bg-surface-2" />
+      <div className="mt-5 h-72 rounded-3xl bg-surface-2" />
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-4">
+          <div className="h-48 rounded-2xl bg-surface-2" />
+          <div className="h-48 rounded-2xl bg-surface-2" />
+        </div>
+        <div className="h-64 rounded-2xl bg-surface-2" />
+      </div>
     </div>
   );
 }

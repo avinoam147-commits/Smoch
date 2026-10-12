@@ -6,13 +6,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\" \"tests/**/*.mjs\" \"scripts/**/*.mjs\"",
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:start": "supabase start",
+    "db:reset": "node scripts/generate-seed.mjs && supabase db reset",
+    "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
+    "test:db": "node --test tests/db.test.mjs",
+    "test:e2e": "node tests/e2e.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
     "lucide-react": "^1.52.0",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -21,6 +32,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "prettier": "^3.9.10",
+    "supabase": "^2.120.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

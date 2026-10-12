@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { formatDate, type Company, type Review } from "@/lib/data";
+import { formatDate, formatShekel } from "@/lib/format";
+import type { Review } from "@/lib/types";
 import { Stars } from "./stars";
-import { VerifiedPurchase } from "./badges";
+import { StaffBadge, VerifiedPurchase } from "./badges";
 import { ReviewActions } from "./review-actions";
 
 export function ReviewCard({
@@ -10,27 +11,29 @@ export function ReviewCard({
   showCompany = false,
 }: {
   review: Review;
-  company: Company;
+  company: { slug: string; name: string };
   showCompany?: boolean;
 }) {
   return (
-    <article className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <article id={`review-${review.id}`} className="scroll-mt-24 rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span
           aria-hidden
           className="grid size-9 place-items-center rounded-full bg-surface-2 text-sm font-semibold text-muted"
         >
-          {review.author.charAt(0)}
+          {review.authorName.charAt(0)}
         </span>
         <div className="min-w-0">
-          <p className="font-medium">{review.author}</p>
-          <p className="text-xs text-muted">{formatDate(review.date)}</p>
+          <p className="font-medium">{review.authorName}</p>
+          <p className="text-xs text-muted">
+            {formatDate(review.createdAt)}
+            {review.editedAt && " · נערכה"}
+          </p>
         </div>
-        {review.verifiedPurchase && (
-          <span className="ms-auto">
-            <VerifiedPurchase />
-          </span>
-        )}
+        <span className="ms-auto flex flex-wrap gap-1.5">
+          {review.verifiedPurchase && <VerifiedPurchase />}
+          {review.source === "staff" && <StaffBadge />}
+        </span>
       </header>
 
       <div className="mt-4 flex items-center gap-3">
@@ -42,21 +45,33 @@ export function ReviewCard({
         )}
       </div>
       <h3 className="mt-2 font-semibold text-pretty">{review.title}</h3>
-      <p className="mt-1.5 leading-relaxed text-ink/85 text-pretty">{review.body}</p>
-      {review.paid && (
-        <p className="mt-3 text-xs text-muted">שילם/ה: ₪{review.paid.toLocaleString("he-IL")}</p>
+      <p className="mt-1.5 whitespace-pre-line leading-relaxed text-pretty text-ink/85">{review.body}</p>
+      {(review.amountPaid != null || review.experienceDate || !review.paid) && (
+        <p className="mt-3 text-xs text-muted">
+          {!review.paid && "לא רכש/ה מהחברה"}
+          {review.amountPaid != null && `שילם/ה ${formatShekel(review.amountPaid)}`}
+          {review.experienceDate &&
+            ` · חוויה מ${new Intl.DateTimeFormat("he-IL", { month: "long", year: "numeric" }).format(new Date(review.experienceDate))}`}
+        </p>
       )}
 
       {review.reply && (
         <div className="mt-4 rounded-xl border-s-4 border-accent bg-surface-2 p-4">
           <p className="text-sm font-semibold">
-            תגובת {company.name} <span className="font-normal text-muted">· {formatDate(review.reply.date)}</span>
+            תגובת {company.name} <span className="font-normal text-muted">· {formatDate(review.reply.createdAt)}</span>
           </p>
-          <p className="mt-1 text-sm leading-relaxed text-ink/85">{review.reply.body}</p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink/85">{review.reply.body}</p>
         </div>
       )}
 
-      {!showCompany && <ReviewActions helpful={review.helpful} />}
+      {!showCompany && (
+        <ReviewActions
+          reviewId={review.id}
+          helpfulCount={review.helpfulCount}
+          companySlug={company.slug}
+          existingReply={review.reply?.body ?? null}
+        />
+      )}
     </article>
   );
 }

@@ -29,7 +29,10 @@ export function SearchBox({ defaultValue = "", autoFocus = false }: { defaultVal
         aria-label="חיפוש חברה"
         className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted"
       />
-      <button type="submit" className="pressable rounded-xl bg-accent px-5 py-2.5 font-medium text-accent-ink hover:opacity-90">
+      <button
+        type="submit"
+        className="pressable rounded-xl bg-accent px-5 py-2.5 font-medium text-accent-ink hover:opacity-90"
+      >
         חיפוש
       </button>
     </form>

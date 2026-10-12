@@ -97,11 +97,21 @@ body {
 .stagger > * {
   animation: rise 360ms var(--ease-out) both;
 }
-.stagger > *:nth-child(2) { animation-delay: 40ms; }
-.stagger > *:nth-child(3) { animation-delay: 80ms; }
-.stagger > *:nth-child(4) { animation-delay: 120ms; }
-.stagger > *:nth-child(5) { animation-delay: 160ms; }
-.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 200ms;
+}
 
 @keyframes rise {
   from {
@@ -139,5 +149,29 @@ body {
 @keyframes fade {
   from {
     opacity: 0;
+  }
+}
+
+/* Dropdown menus scale from the corner they're anchored to (top, inline-end). */
+.menu-pop {
+  transform-origin: top left;
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: scale(0.96) translateY(-2px);
+  }
+}
+[dir="ltr"] .menu-pop {
+  transform-origin: top right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-pop {
+    transition: opacity 150ms ease;
+    @starting-style {
+      transform: none;
+    }
   }
 }

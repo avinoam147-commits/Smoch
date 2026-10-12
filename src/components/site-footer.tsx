@@ -14,16 +14,46 @@ export function SiteFooter() {
         <div className="space-y-2">
           <p className="font-semibold">האתר</p>
           <ul className="space-y-1.5 text-muted">
-            <li><Link className="hover:text-ink" href="/companies">כל החברות</Link></li>
-            <li><Link className="hover:text-ink" href="/add-company">הוספת חברה</Link></li>
-            <li><Link className="hover:text-ink" href="/guidelines">כללי כתיבת ביקורת</Link></li>
+            <li>
+              <Link className="hover:text-ink" href="/companies">
+                כל החברות
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-ink" href="/add-company">
+                הוספת חברה
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-ink" href="/guidelines">
+                כללי כתיבת ביקורת
+              </Link>
+            </li>
           </ul>
         </div>
         <div className="space-y-2">
           <p className="font-semibold">שקיפות</p>
           <ul className="space-y-1.5 text-muted">
-            <li><Link className="hover:text-ink" href="/guidelines#score">איך מחושב הציון</Link></li>
-            <li><Link className="hover:text-ink" href="/guidelines#reports">דיווח והסרת תוכן</Link></li>
+            <li>
+              <Link className="hover:text-ink" href="/guidelines#score">
+                איך מחושב הציון
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-ink" href="/guidelines#reports">
+                דיווח והסרת תוכן
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-ink" href="/terms">
+                תנאי שימוש
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-ink" href="/privacy">
+                מדיניות פרטיות
+              </Link>
+            </li>
           </ul>
         </div>
       </div>

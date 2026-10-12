@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Heebo } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const heebo = Heebo({
@@ -10,12 +12,13 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  openGraph: { siteName: "סמוך", locale: "he_IL", type: "website" },
   title: {
     default: "סמוך — ביקורות אמיתיות על קורסי מסחר",
     template: "%s · סמוך",
   },
-  description:
-    "דירוגים וביקורות ציבוריות על קורסי מסחר, קבוצות איתותים וליווי בישראל. לפני שמשלמים, בודקים.",
+  description: "דירוגים וביקורות ציבוריות על קורסי מסחר, קבוצות איתותים וליווי בישראל. לפני שמשלמים, בודקים.",
 };
 
 export const viewport: Viewport = {
@@ -29,9 +32,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="he" dir="rtl" className={`${heebo.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
-        <div className="bg-ink text-bg text-center text-xs py-1.5 px-4">
-          גרסת הדגמה. כל החברות והביקורות באתר בדויות.
-        </div>
+        {!isSupabaseConfigured && (
+          <div className="bg-ink px-4 py-1.5 text-center text-xs text-bg">
+            גרסת הדגמה. כל החברות והביקורות באתר בדויות.
+          </div>
+        )}
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />

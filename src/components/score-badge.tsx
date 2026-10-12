@@ -1,4 +1,4 @@
-import { scoreTone } from "@/lib/data";
+import { scoreTone } from "@/lib/format";
 import { toneText } from "./stars";
 
 export function ScoreBadge({ score }: { score: number }) {
