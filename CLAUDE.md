@@ -49,7 +49,8 @@
 - ✅ Google OAuth: הלקוח נוצר וחובר ל-Supabase. ב-Branding מוגדרים: דף הבית, `/privacy`, `/terms`, ו-Authorized domains `uksvpmspwyotnbczyzqv.supabase.co` + `smoch-web.vercel.app`. האפליקציה פורסמה (Publish app).
 - ✅ Vercel: פרוס, משתני סביבה מוגדרים, Site URL ו-Redirect URL (`/auth/callback`) מוגדרים ב-Supabase.
 - ✅ הבעלים התחבר ונכנס לפאנל הניהול.
-- ⏳ **ממתין:** חבר של הבעלים צריך לנסות להתחבר עם Gmail משלו, כדי לוודא שההתחברות פתוחה לכולם.
+- ✅ חבר של הבעלים התחבר עם Gmail משלו, כך שההתחברות פתוחה לכולם.
+- ⏳ **בתהליך:** בחירת דומיין ורכישתו (ראו "הצעדים הבאים").
 - 💡 הוצע לבעלים להוסיף מהפאנל קטגוריה "דרופשיפינג ומסחר אונליין" (מזהה `dropshipping`, סדר `45`). לא ידוע אם הוסיף.
 
 ## החלטות מוצר (לא לשנות בלי לשאול)
@@ -120,7 +121,7 @@ Claude-Session: https://claude.ai/code/session_01LanyrgemGQBSvQWWkfQtHP
 
 ## הצעדים הבאים
 
-1. לשמוע מהבעלים אם החבר הצליח להתחבר. אם לא, לבדוק ב-Google Auth Platform, ב-Audience, שהסטטוס הוא In production.
+1. דומיין: הבעלים בוחר שם ורוכש אותו. אחרי זה מחברים ב-Vercel ומעדכנים לפי הסעיף "דומיין" ב-`LAUNCH_CHECKLIST.md`. בקוד אין כתובת קבועה: הכול עובר דרך `NEXT_PUBLIC_SITE_URL` (`src/lib/site.ts`).
 2. להמשיך בשינויים שהבעלים יבקש.
 3. לקראת השקה: לעבור על `LAUNCH_CHECKLIST.md`, בעיקר אימייל בדומיין, Twilio, עורך דין ו-Search Console.
 
