@@ -70,13 +70,13 @@ async function ReviewGate({ params }: { params: PageProps<"/company/[slug]/revie
         → חזרה ל{company.name}
       </Link>
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-balance">
-        {defaults ? `עריכת הדירוג שלך ל${company.name}` : `איך היה עם ${company.name}?`}
+        {defaults ? `עריכת הביקורת שלך על ${company.name}` : `איך היה עם ${company.name}?`}
       </h1>
-      <p className="mt-2 text-muted">בחרו דירוג. אם יש לכם עוד כמה מילים, הן יעזרו לאחרים להחליט, אבל זה לא חובה.</p>
+      <p className="mt-2 text-muted">בחרו דירוג וספרו בכמה מילים איך היה. גם משפט אחד עוזר לאחרים להחליט.</p>
 
       {!viewer ? (
         <div className="appear mt-8 rounded-2xl border border-line bg-surface p-6 text-center sm:p-8">
-          <p className="font-semibold">כדי לדרג צריך להתחבר</p>
+          <p className="font-semibold">כדי לכתוב ביקורת צריך להתחבר</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
             נציג רק שם פרטי ואות ראשונה משם המשפחה. כתובת המייל לא מתפרסמת.
           </p>
@@ -88,7 +88,7 @@ async function ReviewGate({ params }: { params: PageProps<"/company/[slug]/revie
         <Notice>החשבון מושעה ולא ניתן לכתוב ביקורות. לפרטים פנו אלינו.</Notice>
       ) : requirePhone && !viewer.phoneVerified && !defaults ? (
         <Notice>
-          כדי לדרג צריך לאמת מספר טלפון. זה לוקח פחות מדקה ועוזר לנו למנוע דירוגים מזויפים.{" "}
+          כדי לכתוב ביקורת צריך לאמת מספר טלפון. זה לוקח פחות מדקה ועוזר לנו למנוע ביקורות מזויפות.{" "}
           <Link
             href={`/account?next=${encodeURIComponent(path)}#phone`}
             className="font-medium text-accent hover:underline"

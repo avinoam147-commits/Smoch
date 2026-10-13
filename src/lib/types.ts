@@ -6,8 +6,6 @@ export type CompanyStats = {
   distribution: [number, number, number, number, number];
   rawAverage: number;
   trustScore: number;
-  /** published ratings that include written text */
-  textCount: number;
 };
 
 export type Company = {
@@ -36,8 +34,7 @@ export type Review = {
   companyId: string;
   authorName: string;
   rating: number;
-  /** null for a rating without written text */
-  body: string | null;
+  body: string;
   paid: boolean;
   amountPaid: number | null;
   experienceDate: string | null;

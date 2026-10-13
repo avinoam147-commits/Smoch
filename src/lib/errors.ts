@@ -20,6 +20,7 @@ export function friendlyError(error: PgError, fallback = "משהו השתבש. �
     return "הפריט כבר קיים.";
   }
   if (error.code === "23514") return "חלק מהשדות לא עומדים בדרישות. בדקו אורך ותוכן.";
+  if (error.code === "23502") return "חסרים פרטים. בדקו שכל שדות החובה מלאים.";
   if (error.code === "42501") return "אין לך הרשאה לפעולה הזו.";
   return fallback;
 }

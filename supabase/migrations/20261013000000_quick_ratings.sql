@@ -1,14 +1,31 @@
--- Quick ratings: no review title, and the written text is optional.
--- A rating on its own (stars only) counts towards the company's score.
+-- Short reviews: no title, and the written text needs only 10 characters
+-- (two or three words). Text stays required: a rating has to say why.
+--
+-- Safe to run more than once, including on a database where an earlier
+-- version of this file (optional text) was already applied.
 
-alter table public.reviews drop column title;
+begin;
 
-alter table public.reviews alter column body drop not null;
+alter table public.reviews drop column if exists title;
+
 alter table public.reviews drop constraint if exists reviews_body_check;
-alter table public.reviews add constraint reviews_body_check
-  check (body is null or char_length(body) between 1 and 5000);
 
--- Same rules as before; only the moderated text changed (body may be empty).
+-- Star-only ratings posted while text was optional can't stay published
+-- under the new rule. Keep them (nothing is deleted) but hide them, with a
+-- note the author sees in their account. They no longer count in scores.
+select set_config('smoch.internal', 'on', true);
+update public.reviews
+   set body = '(דירוג בלי טקסט)',
+       status = 'hidden',
+       moderation_note = 'הדירוג נוצר בלי טקסט, לפני שכתיבת ביקורת הפכה לחובה. אפשר לערוך ולהוסיף כמה מילים.'
+ where body is null or btrim(body) = '';
+select set_config('smoch.internal', 'off', true);
+
+alter table public.reviews alter column body set not null;
+alter table public.reviews add constraint reviews_body_check
+  check (char_length(btrim(body)) between 10 and 5000);
+
+-- Same rules as before; only the moderated text changed (no title).
 create or replace function public.reviews_guard()
 returns trigger language plpgsql security definer set search_path = '' as $$
 declare
@@ -16,11 +33,6 @@ declare
   reason text;
   company_status text;
 begin
-  -- Whitespace-only text is stored as "no text".
-  if new.body is not null and btrim(new.body) = '' then
-    new.body := null;
-  end if;
-
   if public.is_internal() then
     return new;
   end if;
@@ -88,7 +100,7 @@ begin
     new.amount_paid := null;
   end if;
 
-  reason := public.moderation_reason(coalesce(new.body, ''));
+  reason := public.moderation_reason(new.body);
   if reason is not null then
     new.status := 'pending';
     new.moderation_note := reason;
@@ -102,13 +114,14 @@ begin
   return new;
 end $$;
 
--- Stats gain text_count: how many of the published ratings include written text.
-create or replace view public.company_stats with (security_invoker = true) as
+-- Recreate the stats view in its original shape (an earlier version of this
+-- file added a text_count column that is no longer needed).
+drop view if exists public.company_stats;
+create view public.company_stats with (security_invoker = true) as
 with weighted as (
   select
     r.company_id,
     r.rating,
-    r.body,
     (case when r.verified_purchase then 1.5 else 1.0 end)
       * (case
            when r.created_at > now() - interval '1 year' then 1.0
@@ -127,8 +140,11 @@ select
   count(*) filter (where w.rating = 4)::int as r4,
   count(*) filter (where w.rating = 5)::int as r5,
   coalesce(avg(w.rating), 0)::float8 as raw_average,
-  ((3.0 * 10 + coalesce(sum(w.w * w.rating), 0)) / (10 + coalesce(sum(w.w), 0)))::float8 as trust_score,
-  count(w.body)::int as text_count
+  ((3.0 * 10 + coalesce(sum(w.w * w.rating), 0)) / (10 + coalesce(sum(w.w), 0)))::float8 as trust_score
 from public.companies c
 left join weighted w on w.company_id = c.id
 group by c.id;
+
+grant select on public.company_stats to anon, authenticated;
+
+commit;

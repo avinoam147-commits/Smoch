@@ -79,7 +79,7 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
                 className="pressable inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 font-medium text-accent-ink hover:opacity-90"
               >
                 <PenLine className="size-4" aria-hidden />
-                דירוג החברה
+                כתיבת ביקורת
               </Link>
               {company.website && (
                 <a
@@ -121,11 +121,7 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
         </section>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <ReviewsSection
-            company={{ slug: company.slug, name: company.name }}
-            reviews={reviews}
-            starOnlyCount={Math.max(0, reviewCount - company.stats.textCount)}
-          />
+          <ReviewsSection company={{ slug: company.slug, name: company.name }} reviews={reviews} />
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-line bg-surface p-5">
@@ -198,7 +194,7 @@ function ScorePending({ count }: { count: number }) {
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
         <strong className="font-semibold text-ink">למה הציון מוסתר?</strong> ציון שמבוסס על מעט דירוגים יכול לשקף לקוח
         אחד מאוכזב, או כמה חברים של בעלי החברה, ולהטעות. לכן עד שמצטברים {MIN_RATINGS_FOR_SCORE} דירוגים אנחנו לא מציגים
-        ציון ולא התפלגות, רק את הביקורות הכתובות עצמן. הכלל זהה לכל החברות באתר.{" "}
+        ציון ולא התפלגות, רק את הביקורות עצמן. הכלל זהה לכל החברות באתר.{" "}
         <Link href="/guidelines#score" className="text-accent hover:underline">
           עוד על חישוב הציון
         </Link>
@@ -263,7 +259,7 @@ function JsonLd({ company, reviews }: { company: Company; reviews: Review[] }) {
       "@type": "Review",
       author: { "@type": "Person", name: r.authorName },
       datePublished: r.createdAt.slice(0, 10),
-      reviewBody: r.body ?? undefined,
+      reviewBody: r.body,
       reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
     }));
   }

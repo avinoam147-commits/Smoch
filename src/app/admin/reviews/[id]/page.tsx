@@ -61,7 +61,7 @@ export default async function EditReviewPage({ params, searchParams }: PageProps
             companyId: r.company_id,
             authorName: r.author_name,
             rating: r.rating,
-            body: r.body ?? "",
+            body: r.body,
             paid: r.paid,
             amountPaid: r.amount_paid != null ? String(r.amount_paid) : "",
             experienceDate: r.experience_date?.slice(0, 7) ?? "",

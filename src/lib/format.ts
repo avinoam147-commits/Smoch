@@ -19,13 +19,16 @@ export function isCategory(v: unknown): v is CategoryId {
  */
 export const MIN_RATINGS_FOR_SCORE = 10;
 
+/** Reviews need a few words: enough to say why, without being a chore. */
+export const MIN_REVIEW_LENGTH = 10;
+
 export function hasScore(stats: { reviewCount: number }) {
   return stats.reviewCount >= MIN_RATINGS_FOR_SCORE;
 }
 
 /** First words of a review, for lists and emails. */
 export function excerpt(body: string | null | undefined, max = 60) {
-  if (!body) return "דירוג בלי טקסט";
+  if (!body) return "";
   const t = body.replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t;
 }

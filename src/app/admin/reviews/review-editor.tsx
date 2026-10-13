@@ -95,7 +95,7 @@ export function ReviewEditor({
         {errors.rating && <p className="mt-1 text-xs font-medium text-bad">{errors.rating}</p>}
       </div>
 
-      <Field label="תוכן (לא חובה)" hint={`${bodyLen} תווים. בלי טקסט זה דירוג כוכבים בלבד.`} error={errors.body}>
+      <Field label="תוכן" hint={`${bodyLen} תווים (מינימום 10)`} error={errors.body} required>
         <textarea
           name="body"
           defaultValue={initial.body}

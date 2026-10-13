@@ -21,7 +21,6 @@ const emptyStats: CompanyStats = {
   distribution: [0, 0, 0, 0, 0],
   rawAverage: 0,
   trustScore: 3,
-  textCount: 0,
 };
 
 export function toStats(s: StatsRow | undefined | null): CompanyStats {
@@ -31,7 +30,6 @@ export function toStats(s: StatsRow | undefined | null): CompanyStats {
     distribution: [s.r1 ?? 0, s.r2 ?? 0, s.r3 ?? 0, s.r4 ?? 0, s.r5 ?? 0],
     rawAverage: s.raw_average ?? 0,
     trustScore: s.trust_score ?? 3,
-    textCount: s.text_count ?? 0,
   };
 }
 
@@ -119,9 +117,7 @@ export const getCompanyBySlug = cache(async (slug: string): Promise<Company | nu
 export const getCompanyReviews = cache(async (companyId: string): Promise<Review[]> => {
   await connection();
   if (!isSupabaseConfigured) {
-    return demoReviews
-      .filter((r) => r.companyId === companyId && r.body)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return demoReviews.filter((r) => r.companyId === companyId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   const supabase = createPublicClient();
   const { data, error } = await supabase
@@ -129,7 +125,6 @@ export const getCompanyReviews = cache(async (companyId: string): Promise<Review
     .select("*, review_replies(*)")
     .eq("company_id", companyId)
     .eq("status", "published")
-    .not("body", "is", null)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
@@ -148,7 +143,6 @@ export const getRecentReviews = cache(async (limit: number = 4): Promise<ReviewW
     .from("reviews")
     .select("*, review_replies(*), companies!inner(slug, name, status)")
     .eq("status", "published")
-    .not("body", "is", null)
     .eq("companies.status", "published")
     .order("created_at", { ascending: false })
     .limit(limit);

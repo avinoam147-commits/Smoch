@@ -80,8 +80,15 @@ for (const r of data.reviews) {
   }
 }
 
-// Star-only ratings (no text) so some demo companies cross the 10-rating
-// threshold and show a score, while others stay below it.
+// Short extra reviews so some demo companies cross the 10-rating threshold
+// and show a score, while others stay below it.
+const shortBodies = {
+  5: "ממליץ בחום, קיבלתי מה שהובטח.",
+  4: "טוב מאוד, עם כמה דברים לשפר.",
+  3: "בסדר, לא יותר מזה.",
+  2: "פחות ממה שציפיתי.",
+  1: "לא ממליץ, חבל על הכסף.",
+};
 const extraRatings = {
   "green-candle": [5, 5, 4, 5, 4, 5, 3, 5, 4],
   "signal-bot-pro": [1, 1, 2, 1, 1, 5, 1, 1],
@@ -94,7 +101,7 @@ for (const [slug, ratings] of Object.entries(extraRatings)) {
     const name = `מדרג/ת ${i + 1}`;
     lines.push(
       `insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values ('00000000-0000-0000-0000-000000000000', ${q(id)}, 'authenticated', 'authenticated', ${q(`rater-${slug}-${i}@example.com`)}, '', now(), '{"provider":"email","providers":["email"]}', ${q(JSON.stringify({ full_name: name }))}, now(), now());`,
-      `insert into public.reviews (company_id, user_id, author_name, rating, status) values (${[company.id, id, name, rating, "published"].map(q).join(", ")});`,
+      `insert into public.reviews (company_id, user_id, author_name, rating, body, status) values (${[company.id, id, name, rating, shortBodies[rating], "published"].map(q).join(", ")});`,
     );
     extra++;
   }
@@ -103,5 +110,5 @@ for (const [slug, ratings] of Object.entries(extraRatings)) {
 lines.push("", "select set_config('smoch.internal', 'off', false);", "");
 writeFileSync(new URL("../supabase/seed.sql", import.meta.url), lines.join("\n"));
 console.log(
-  `seed.sql: ${authors.length + extra} users, ${data.companies.length} companies, ${data.reviews.length} reviews + ${extra} star-only ratings`,
+  `seed.sql: ${authors.length + extra} users, ${data.companies.length} companies, ${data.reviews.length} reviews + ${extra} short reviews`,
 );

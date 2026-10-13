@@ -8,6 +8,7 @@ import { RatingPicker } from "@/components/rating-picker";
 import { saveReview, registerReceipt, deleteMyReview, type SaveReviewResult } from "@/app/actions/reviews";
 import { createClient } from "@/lib/supabase/browser";
 import { moderationWarning } from "@/lib/moderation";
+import { MIN_REVIEW_LENGTH } from "@/lib/format";
 
 const MAX_BODY = 5000;
 const MAX_FILE = 5 * 1024 * 1024;
@@ -64,8 +65,8 @@ export function ReviewForm({
   }, null);
 
   const errors = result && !result.ok ? (result.fieldErrors ?? {}) : {};
-  const hasText = body.trim().length > 0;
-  const warning = hasText ? moderationWarning(body) : null;
+  const missing = MIN_REVIEW_LENGTH - body.trim().length;
+  const warning = body.trim() ? moderationWarning(body) : null;
   const canAttach = !defaults?.verifiedPurchase && !hasPendingReceipt;
   const detailsOpen = Boolean(defaults?.amountPaid || defaults?.experienceDate);
 
@@ -78,20 +79,16 @@ export function ReviewForm({
         ) : (
           <Clock className="mx-auto size-10 text-mixed" aria-hidden />
         )}
-        <p className="mt-3 text-lg font-semibold">
-          {published ? (hasText ? "תודה, הביקורת פורסמה" : "תודה, הדירוג נקלט") : "תודה, הביקורת התקבלה"}
-        </p>
+        <p className="mt-3 text-lg font-semibold">{published ? "תודה, הביקורת פורסמה" : "תודה, הביקורת התקבלה"}</p>
         <p className="mx-auto mt-1 max-w-sm text-sm text-muted">
           {published
-            ? hasText
-              ? "היא כבר מופיעה בדף החברה."
-              : "הוא נספר בציון של החברה. דירוגים בלי טקסט לא מופיעים ברשימת הביקורות."
+            ? "היא כבר מופיעה בדף החברה."
             : `היא תתפרסם אחרי בדיקה ידנית קצרה${result.note ? ` (${result.note})` : ""}.`}
           {receiptState === "uploaded" && " הקבלה תיבדק ידנית, ואחרי האישור יתווסף תג ״רכישה מאומתת״."}
           {receiptState === "failed" && " את הקבלה לא הצלחנו להעלות. אפשר לנסות שוב מדף העריכה."}
         </p>
         <Link
-          href={`/company/${companySlug}${published && hasText ? `#review-${result.reviewId}` : ""}`}
+          href={`/company/${companySlug}${published ? `#review-${result.reviewId}` : ""}`}
           className="pressable mt-6 inline-flex rounded-xl bg-ink px-5 py-2.5 font-medium text-bg"
         >
           חזרה לדף של {companyName}
@@ -136,7 +133,7 @@ export function ReviewForm({
 
       <div>
         <label htmlFor="body" className="block font-semibold">
-          רוצה להוסיף כמה מילים? <span className="font-normal text-muted">(לא חובה)</span>
+          ספרו בכמה מילים איך היה
         </label>
         <textarea
           id="body"
@@ -148,12 +145,17 @@ export function ReviewForm({
           placeholder="מה הובטח, מה קיבלתם, ואיך היה השירות"
           className="mt-2.5 w-full resize-y rounded-xl border border-line bg-surface px-4 py-3 text-base leading-relaxed outline-none placeholder:text-muted focus:border-ink/40"
         />
+        {missing > 0 && body.length > 0 && (
+          <p className="mt-1.5 text-xs text-muted" aria-live="polite">
+            עוד {missing} {missing === 1 ? "תו" : "תווים"}
+          </p>
+        )}
         {body.length > MAX_BODY - 500 && (
           <p className="mt-1.5 text-xs tabular-nums text-muted">
             {body.length.toLocaleString("he-IL")} / {MAX_BODY.toLocaleString("he-IL")}
           </p>
         )}
-        {errors.body && (
+        {errors.body && missing > 0 && (
           <p role="alert" className="appear mt-1.5 text-sm font-medium text-bad">
             {errors.body}
           </p>
@@ -293,7 +295,7 @@ export function ReviewForm({
           disabled={pending}
           className="pressable w-full rounded-xl bg-accent px-6 py-3.5 text-base font-semibold text-accent-ink hover:opacity-90 disabled:opacity-70"
         >
-          {pending ? "שומרים…" : defaults ? "שמירת השינויים" : hasText ? "פרסום הביקורת" : "פרסום הדירוג"}
+          {pending ? "שומרים…" : defaults ? "שמירת השינויים" : "פרסום הביקורת"}
         </button>
         <p className="text-center text-xs leading-relaxed text-muted">
           יפורסם בשם <strong className="font-medium text-ink">{viewer.displayName}</strong>, ובפרסום את/ה מאשר/ת שזו
@@ -310,7 +312,7 @@ export function ReviewForm({
           type="button"
           disabled={deleting}
           onClick={() => {
-            if (!confirm("למחוק את הדירוג? אי אפשר לבטל את הפעולה.")) return;
+            if (!confirm("למחוק את הביקורת? אי אפשר לבטל את הפעולה.")) return;
             startDelete(async () => {
               const res = await deleteMyReview(defaults.id);
               if (res.ok) router.push(`/company/${companySlug}`);
@@ -319,7 +321,7 @@ export function ReviewForm({
           }}
           className="pressable w-full rounded-xl px-6 py-3 text-sm font-medium text-bad hover:bg-surface-2"
         >
-          מחיקת הדירוג
+          מחיקת הביקורת
         </button>
       )}
     </form>

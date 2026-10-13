@@ -5,7 +5,7 @@ import type { CategoryId, Company, Review, ReviewWithCompany } from "./types";
 
 type RawCompany = (typeof raw.companies)[number];
 
-function stats(d: number[], textCount: number) {
+function stats(d: number[]) {
   const n = d.reduce((a, b) => a + b, 0);
   const sum = d.reduce((acc, count, i) => acc + count * (i + 1), 0);
   return {
@@ -13,13 +13,11 @@ function stats(d: number[], textCount: number) {
     distribution: d as [number, number, number, number, number],
     rawAverage: n ? sum / n : 0,
     trustScore: (3 * 10 + sum) / (10 + n),
-    textCount,
   };
 }
 
 function toCompany({ distribution, ...c }: RawCompany): Company {
-  const textCount = raw.reviews.filter((r) => r.companyId === c.id).length;
-  return { ...c, category: c.category as CategoryId, stats: stats(distribution, textCount) };
+  return { ...c, category: c.category as CategoryId, stats: stats(distribution) };
 }
 
 export const demoCompanies: Company[] = raw.companies.map(toCompany);

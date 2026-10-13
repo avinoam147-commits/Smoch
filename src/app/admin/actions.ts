@@ -8,7 +8,7 @@ import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
 import { lookupRegistry } from "@/lib/registry";
-import { categoryIds } from "@/lib/format";
+import { categoryIds, MIN_REVIEW_LENGTH } from "@/lib/format";
 import type { ActionState, CategoryId } from "@/lib/types";
 import { notifyClaimDecision, notifyCompanyDecision, notifyNewReview, notifyReceiptDecision } from "@/lib/notify";
 
@@ -181,7 +181,7 @@ const reviewSchema = z.object({
   companyId: z.string().uuid("בחרו חברה"),
   authorName: z.string().trim().min(2, "שם קצר מדי").max(40),
   rating: z.coerce.number().int().min(1, "בחרו דירוג").max(5),
-  body: z.preprocess(blankToNull, z.string().trim().max(5000, "עד 5,000 תווים").nullable()),
+  body: z.string().trim().min(MIN_REVIEW_LENGTH, `לפחות ${MIN_REVIEW_LENGTH} תווים`).max(5000, "עד 5,000 תווים"),
   paid: z.enum(["on"]).optional(),
   amountPaid: z.preprocess(blankToNull, z.coerce.number().int().min(0).max(1000000).nullable()),
   experienceDate: z.preprocess(

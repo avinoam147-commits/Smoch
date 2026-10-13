@@ -6,14 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
 import { notifyNewReview, notifyReplyPosted } from "@/lib/notify";
-import { reportReasons, type ReportReason } from "@/lib/format";
+import { MIN_REVIEW_LENGTH, reportReasons, type ReportReason } from "@/lib/format";
 
 const reviewSchema = z.object({
   reviewId: z.string().uuid().optional().or(z.literal("")),
   companyId: z.string().uuid(),
   rating: z.coerce.number().int().min(1, "בחרו דירוג").max(5),
-  // Written text is optional: a star rating on its own is a valid review.
-  body: z.string().trim().max(5000, "הביקורת ארוכה מדי").optional(),
+  body: z.string().trim().min(MIN_REVIEW_LENGTH, "כתבו לפחות כמה מילים על החוויה").max(5000, "הביקורת ארוכה מדי"),
   paid: z.enum(["on"]).optional(),
   amountPaid: z
     .string()
@@ -47,7 +46,7 @@ export async function saveReview(_: unknown, formData: FormData): Promise<SaveRe
   const row = {
     company_id: v.companyId,
     rating: v.rating,
-    body: v.body || null,
+    body: v.body,
     paid,
     amount_paid: paid && v.amountPaid ? Number(v.amountPaid) : null,
     experience_date: v.experienceDate

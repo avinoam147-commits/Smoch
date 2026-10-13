@@ -10,16 +10,7 @@ type Sort = "recent" | "helpful";
 
 const PAGE = 10;
 
-export function ReviewsSection({
-  company,
-  reviews,
-  starOnlyCount,
-}: {
-  company: { slug: string; name: string };
-  reviews: Review[];
-  /** ratings without text: counted in the score, not listed */
-  starOnlyCount: number;
-}) {
+export function ReviewsSection({ company, reviews }: { company: { slug: string; name: string }; reviews: Review[] }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("recent");
   const [limit, setLimit] = useState(PAGE);
@@ -85,9 +76,9 @@ export function ReviewsSection({
         ))}
         {shown.length === 0 && (
           <div className="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-muted">
-            {reviews.length === 0 ? "עדיין אין ביקורות כתובות על החברה." : "אין ביקורות שמתאימות לסינון הזה."}{" "}
+            {reviews.length === 0 ? "עדיין אין ביקורות על החברה." : "אין ביקורות שמתאימות לסינון הזה."}{" "}
             <Link href={`/company/${company.slug}/review`} className="font-medium text-accent hover:underline">
-              {reviews.length === 0 ? "דרגו ראשונים" : "הוסיפו דירוג"}
+              {reviews.length === 0 ? "כתבו את הראשונה" : "הוסיפו ביקורת"}
             </Link>
           </div>
         )}
@@ -101,14 +92,6 @@ export function ReviewsSection({
         >
           עוד ביקורות ({shown.length - limit})
         </button>
-      )}
-
-      {starOnlyCount > 0 && (
-        <p className="mt-5 text-center text-sm text-muted">
-          {starOnlyCount === 1
-            ? "ועוד דירוג אחד בלי טקסט, שנספר בציון."
-            : `ועוד ${starOnlyCount.toLocaleString("he-IL")} דירוגים בלי טקסט, שנספרים בציון.`}
-        </p>
       )}
     </section>
   );

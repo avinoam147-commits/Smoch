@@ -450,7 +450,7 @@ export type Database = {
           added_by: string | null;
           amount_paid: number | null;
           author_name: string;
-          body: string | null;
+          body: string;
           company_id: string;
           created_at: string;
           edited_at: string | null;
@@ -471,7 +471,7 @@ export type Database = {
           added_by?: string | null;
           amount_paid?: number | null;
           author_name: string;
-          body?: string | null;
+          body: string;
           company_id: string;
           created_at?: string;
           edited_at?: string | null;
@@ -491,7 +491,7 @@ export type Database = {
           added_by?: string | null;
           amount_paid?: number | null;
           author_name?: string;
-          body?: string | null;
+          body?: string;
           company_id?: string;
           created_at?: string;
           edited_at?: string | null;
@@ -536,7 +536,6 @@ export type Database = {
           r5: number | null;
           raw_average: number | null;
           review_count: number | null;
-          text_count: number | null;
           trust_score: number | null;
         };
         ComputedFields: never;

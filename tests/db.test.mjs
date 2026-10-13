@@ -137,34 +137,28 @@ test("reviews: server decides author, status and verified flag", async () => {
   assert.equal(dup.error?.code, "23505", "one review per user per company");
 });
 
-test("reviews: a star rating without text is valid and published", async () => {
+test("reviews: a few words are required, there is no other length rule", async () => {
   const c = await newCompany();
+  const empty = await alice.client.from("reviews").insert({ company_id: c.id, author_name: "x", rating: 4 });
+  assert.ok(empty.error, "a rating needs text");
+  const blank = await alice.client
+    .from("reviews")
+    .insert({ company_id: c.id, author_name: "x", rating: 4, body: "         " });
+  assert.ok(blank.error, "whitespace isn't text");
+  const short = await alice.client
+    .from("reviews")
+    .insert({ company_id: c.id, author_name: "x", rating: 4, body: "טוב מאוד" });
+  assert.ok(short.error, "under 10 characters is rejected");
+
   const { data, error } = await alice.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 4 })
+    .insert({ company_id: c.id, author_name: "x", rating: 4, body: "קורס טוב מאוד" })
     .select()
     .single();
   assert.ifError(error);
-  assert.equal(data.body, null);
   assert.equal(data.status, "published");
 
-  const c2 = await newCompany();
-  const { data: blank } = await bob.client
-    .from("reviews")
-    .insert({ company_id: c2.id, author_name: "x", rating: 3, body: "   " })
-    .select()
-    .single();
-  assert.equal(blank.body, null, "whitespace-only text is stored as no text");
-
-  const { data: stats } = await anon
-    .from("company_stats")
-    .select("review_count, text_count")
-    .eq("company_id", c.id)
-    .single();
-  assert.equal(stats.review_count, 1);
-  assert.equal(stats.text_count, 0);
-
-  const tooLong = await carol.client
+  const tooLong = await bob.client
     .from("reviews")
     .insert({ company_id: c.id, author_name: "x", rating: 3, body: "א".repeat(5001) });
   assert.ok(tooLong.error, "text is capped at 5000 characters");
@@ -212,7 +206,7 @@ test("reviews: owners edit content only; moderators' decisions stick", async () 
   await admin.client.from("reviews").update({ status: "hidden", moderation_note: "הפרה" }).eq("id", r.id);
   const { data: again } = await carol.client
     .from("reviews")
-    .update({ body: "טקסט חדש" })
+    .update({ body: "טקסט חדש וארוך יותר" })
     .eq("id", r.id)
     .select()
     .single();
@@ -413,7 +407,7 @@ test("admin helpers are closed to regular users", async () => {
   assert.ok(res.error);
   const anonRes = await anon.rpc("delete_my_account");
   assert.ok(anonRes.error);
-  const ok = await admin.client.rpc("admin_list_users", { search: "alice" });
+  const ok = await admin.client.rpc("admin_list_users", { search: `alice-${run}` });
   assert.ifError(ok.error);
   assert.equal(ok.data.length, 1);
 });

@@ -101,7 +101,6 @@ await step("public: home, company page, JSON-LD", async () => {
   await p.getByRole("heading", { name: "קורס הנר הירוק" }).waitFor();
   const ld = await p.locator('script[type="application/ld+json"]').textContent();
   assert.match(ld, /AggregateRating/, "12 ratings: score and rich result are public");
-  await p.getByText("ועוד 9 דירוגים בלי טקסט").waitFor();
   await shot(p, "02-company");
   await p.goto(`${BASE}/company/eye-level-trading`);
   await p.getByText("למה הציון מוסתר?").waitFor();
@@ -124,7 +123,7 @@ await step("review: write with receipt, published and visible", async () => {
   const p = await pageFor(alice);
   await p.goto(`${BASE}/company/green-candle/review`);
   await p.getByText("יפורסם בשם").waitFor();
-  await p.getByRole("button", { name: "פרסום הדירוג" }).click();
+  await p.getByRole("button", { name: "פרסום הביקורת" }).click();
   await p.getByText("בחרו דירוג").waitFor();
   await p.getByRole("radio", { name: /4 כוכבים/ }).click();
   await p.locator("#body").fill(`קורס מסודר עם מרצה זמין. ${body}`);
@@ -155,15 +154,20 @@ await step("review: moderation warning and pending status", async () => {
   await p.context().close();
 });
 
-await step("review: a quick star-only rating counts but isn't listed", async () => {
+await step("review: a short review is quick, but needs a few words", async () => {
   const p = await pageFor(bob, { width: 390, height: 844 });
   await p.goto(`${BASE}/company/gal-trade-algo/review`);
   await p.getByRole("radio", { name: /2 כוכבים/ }).click();
-  await shot(p, "03b-quick-rating-mobile");
-  await p.getByRole("button", { name: "פרסום הדירוג" }).click();
-  await p.getByText("תודה, הדירוג נקלט").waitFor();
+  await p.locator("#body").fill("לא טוב");
+  await p.getByText("עוד 4 תווים").waitFor();
+  await p.getByRole("button", { name: "פרסום הביקורת" }).click();
+  await p.getByText("כתבו לפחות כמה מילים על החוויה").waitFor();
+  await p.locator("#body").fill("לא טוב, הבוט הפסיד כסף");
+  await shot(p, "03b-quick-review-mobile");
+  await p.getByRole("button", { name: "פרסום הביקורת" }).click();
+  await p.getByText("תודה, הביקורת פורסמה").waitFor();
   await p.goto(`${BASE}/company/gal-trade-algo`);
-  await p.getByText("ועוד דירוג אחד בלי טקסט").waitFor();
+  await p.getByText("הבוט הפסיד כסף").waitFor();
   await p.getByText("3 מתוך 10").waitFor();
   await p.context().close();
 });
@@ -325,7 +329,7 @@ await step("account: rename, edit own review, delete account", async () => {
   await p.getByText("נשמר.").filter({ visible: true }).first().waitFor();
   await shot(p, "13-account-mobile");
   await p.goto(`${BASE}/company/green-candle/review`);
-  await p.getByRole("heading", { name: /עריכת הדירוג שלך/ }).waitFor();
+  await p.getByRole("heading", { name: /עריכת הביקורת שלך/ }).waitFor();
   await p.locator("#body").fill(`קורס מסודר עם מרצה זמין מאוד. ${body}`);
   await p.getByRole("button", { name: "שמירת השינויים" }).click();
   await p.getByText("תודה, הביקורת פורסמה").waitFor();
