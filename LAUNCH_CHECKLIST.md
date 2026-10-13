@@ -16,7 +16,8 @@
   - `NEXT_PUBLIC_SITE_URL` ב-Vercel (ואחר כך Redeploy).
   - Site URL ו-Redirect URLs ב-Supabase.
   - Authorized domains, דף הבית, ופרטיות ותנאים ב-Google Auth Platform.
-- [ ] **בדיקה משפטית:** עורך דין עובר על תנאי השימוש, מדיניות הפרטיות וכללי האתר.
+- [ ] **בדיקה משפטית:** עורך דין עובר על תנאי השימוש, מדיניות הפרטיות וכללי האתר, וגם על מקומות ממומנים בדף הבית (סימון "ממומן" וגבייה מחברות).
+- [x] **מדידת כניסות:** Vercel Web Analytics הופעל.
 - [ ] **Google Search Console:** לאמת את הדומיין ולשלוח את `/sitemap.xml`.
 
 ## מומלץ
