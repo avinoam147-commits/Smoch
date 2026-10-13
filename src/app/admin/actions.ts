@@ -1,12 +1,11 @@
 "use server";
 
-import { refresh, updateTag } from "next/cache";
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
 import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { tags } from "@/lib/queries";
 import { friendlyError } from "@/lib/errors";
 import { lookupRegistry } from "@/lib/registry";
 import { categoryIds } from "@/lib/format";
@@ -19,9 +18,8 @@ async function adminClient() {
   return { supabase: await createClient(), viewer };
 }
 
+// Public pages read fresh data on every request; this re-renders the admin view.
 function invalidate() {
-  updateTag(tags.companies);
-  updateTag(tags.reviews);
   refresh();
 }
 
@@ -183,8 +181,7 @@ const reviewSchema = z.object({
   companyId: z.string().uuid("בחרו חברה"),
   authorName: z.string().trim().min(2, "שם קצר מדי").max(40),
   rating: z.coerce.number().int().min(1, "בחרו דירוג").max(5),
-  title: z.string().trim().min(4, "כותרת קצרה מדי").max(120),
-  body: z.string().trim().min(80, "לפחות 80 תווים").max(5000),
+  body: z.preprocess(blankToNull, z.string().trim().max(5000, "עד 5,000 תווים").nullable()),
   paid: z.enum(["on"]).optional(),
   amountPaid: z.preprocess(blankToNull, z.coerce.number().int().min(0).max(1000000).nullable()),
   experienceDate: z.preprocess(
@@ -209,7 +206,6 @@ export async function saveAdminReview(_: ActionState, formData: FormData): Promi
     company_id: v.companyId,
     author_name: v.authorName,
     rating: v.rating,
-    title: v.title,
     body: v.body,
     paid,
     amount_paid: paid ? v.amountPaid : null,

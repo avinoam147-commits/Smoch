@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatDateTime, reportReasons, type ReportReason } from "@/lib/format";
+import { excerpt, formatDateTime, reportReasons, type ReportReason } from "@/lib/format";
 import { StatusChip } from "@/components/status-chip";
 import { ReviewEditor } from "../review-editor";
 import { ReplyEditor } from "./reply-editor";
@@ -35,7 +35,7 @@ export default async function EditReviewPage({ params, searchParams }: PageProps
       </Link>
       <div className="mt-2">
         <PageHeader
-          title={r.title}
+          title={excerpt(r.body)}
           description={`${r.author_name} · ${r.companies?.name} · ${formatDateTime(r.created_at)}${r.edited_at ? ` · נערכה ${formatDateTime(r.edited_at)}` : ""}`}
           actions={
             r.status === "published" && r.companies?.status === "published" ? (
@@ -61,8 +61,7 @@ export default async function EditReviewPage({ params, searchParams }: PageProps
             companyId: r.company_id,
             authorName: r.author_name,
             rating: r.rating,
-            title: r.title,
-            body: r.body,
+            body: r.body ?? "",
             paid: r.paid,
             amountPaid: r.amount_paid != null ? String(r.amount_paid) : "",
             experienceDate: r.experience_date?.slice(0, 7) ?? "",

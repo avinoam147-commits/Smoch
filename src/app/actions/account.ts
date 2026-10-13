@@ -1,10 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
-import { tags } from "@/lib/queries";
 import { friendlyError } from "@/lib/errors";
 
 export async function signOut() {
@@ -74,7 +72,5 @@ export async function deleteAccount(confirmation: string) {
   const { error } = await supabase.rpc("delete_my_account");
   if (error) return { ok: false, message: friendlyError(error) };
   await supabase.auth.signOut();
-  updateTag(tags.reviews);
-  updateTag(tags.companies);
   redirect("/?deleted=1");
 }

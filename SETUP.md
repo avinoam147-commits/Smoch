@@ -15,8 +15,9 @@
    - Plan: Free.
 3. כשהפרויקט מוכן, יוצרים את הטבלאות:
    - בתפריט הצד: **SQL Editor**, ואז **New query**.
-   - פותחים בגיטהאב את הקובץ `supabase/migrations/20261012000000_init.sql`, מעתיקים את **כל** התוכן ומדביקים.
-   - לוחצים **Run**. צריך להופיע `Success. No rows returned`.
+   - פותחים בגיטהאב את הקבצים בתיקייה `supabase/migrations/` **לפי הסדר** (לפי התאריך בשם הקובץ).
+   - לכל קובץ: מעתיקים את **כל** התוכן, מדביקים ב-New query ולוחצים **Run**. צריך להופיע `Success`.
+   - כשנוסף קובץ חדש לתיקייה, מריצים רק אותו.
 4. מעתיקים את המפתחות. **Project Settings**, ואז **API Keys**:
    - `Project URL`, שנראה כמו `https://abcd1234.supabase.co`
    - `Publishable key`, שמתחיל ב-`sb_publishable_`

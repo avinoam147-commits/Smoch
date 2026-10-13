@@ -11,7 +11,6 @@ export type ReviewFormValues = {
   companyId: string;
   authorName: string;
   rating: number;
-  title: string;
   body: string;
   paid: boolean;
   amountPaid: string;
@@ -96,10 +95,7 @@ export function ReviewEditor({
         {errors.rating && <p className="mt-1 text-xs font-medium text-bad">{errors.rating}</p>}
       </div>
 
-      <Field label="כותרת" error={errors.title} required>
-        <input name="title" defaultValue={initial.title} maxLength={120} className={inputClass} />
-      </Field>
-      <Field label="תוכן" hint={`${bodyLen} תווים (מינימום 80)`} error={errors.body} required>
+      <Field label="תוכן (לא חובה)" hint={`${bodyLen} תווים. בלי טקסט זה דירוג כוכבים בלבד.`} error={errors.body}>
         <textarea
           name="body"
           defaultValue={initial.body}

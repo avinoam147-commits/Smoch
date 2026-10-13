@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/format";
+import { excerpt, formatDate } from "@/lib/format";
 import { Stars } from "@/components/stars";
 import { StatusChip } from "@/components/status-chip";
 import { ActionButton } from "../_components/action-button";
@@ -22,13 +22,13 @@ export default async function AdminReviews({ searchParams }: PageProps<"/admin/r
   let query = supabase
     .from("reviews")
     .select(
-      "id, rating, title, author_name, status, moderation_note, verified_purchase, source, created_at, companies(id, name), reports(status)",
+      "id, rating, body, author_name, status, moderation_note, verified_purchase, source, created_at, companies(id, name), reports(status)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
   if (status) query = query.eq("status", status as (typeof statuses)[number]);
   if (company) query = query.eq("company_id", company);
-  if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%,author_name.ilike.%${q}%`);
+  if (q) query = query.or(`body.ilike.%${q}%,author_name.ilike.%${q}%`);
   const { data: rows } = await query;
   const { data: companyRow } = company
     ? await supabase.from("companies").select("name").eq("id", company).maybeSingle()
@@ -64,7 +64,7 @@ export default async function AdminReviews({ searchParams }: PageProps<"/admin/r
           { value: "rejected", label: "נדחו" },
         ]}
       />
-      <SearchForm defaultValue={q} placeholder="כותרת, תוכן או שם כותב" hidden={hidden} />
+      <SearchForm defaultValue={q} placeholder="תוכן או שם כותב/ת" hidden={hidden} />
 
       {rows?.length ? (
         <Table head={["ביקורת", "חברה", "כותב/ת", "סטטוס", "תאריך", ""]}>
@@ -75,7 +75,7 @@ export default async function AdminReviews({ searchParams }: PageProps<"/admin/r
                 <td className="max-w-xs px-4 py-3">
                   <Stars value={r.rating} size="sm" />
                   <Link href={`/admin/reviews/${r.id}`} className="mt-1 block truncate font-medium hover:underline">
-                    {r.title}
+                    {excerpt(r.body)}
                   </Link>
                   {r.moderation_note && <p className="truncate text-xs text-muted">{r.moderation_note}</p>}
                 </td>

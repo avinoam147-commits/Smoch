@@ -100,8 +100,15 @@ await step("public: home, company page, JSON-LD", async () => {
   await p.goto(`${BASE}/company/green-candle`);
   await p.getByRole("heading", { name: "קורס הנר הירוק" }).waitFor();
   const ld = await p.locator('script[type="application/ld+json"]').textContent();
-  assert.match(ld, /AggregateRating/);
+  assert.match(ld, /AggregateRating/, "12 ratings: score and rich result are public");
+  await p.getByText("ועוד 9 דירוגים בלי טקסט").waitFor();
   await shot(p, "02-company");
+  await p.goto(`${BASE}/company/eye-level-trading`);
+  await p.getByText("למה הציון מוסתר?").waitFor();
+  await p.getByText("2 מתוך 10").waitFor();
+  const ld2 = await p.locator('script[type="application/ld+json"]').textContent();
+  assert.doesNotMatch(ld2, /AggregateRating/, "below 10 ratings the score stays hidden");
+  await shot(p, "02b-company-pending");
   await p.context().close();
 });
 
@@ -117,16 +124,15 @@ await step("review: write with receipt, published and visible", async () => {
   const p = await pageFor(alice);
   await p.goto(`${BASE}/company/green-candle/review`);
   await p.getByText("יפורסם בשם").waitFor();
-  await p.getByRole("button", { name: "פרסום הביקורת" }).click();
-  await p.getByText("צריך לאשר את כללי הכתיבה").waitFor();
+  await p.getByRole("button", { name: "פרסום הדירוג" }).click();
+  await p.getByText("בחרו דירוג").waitFor();
   await p.getByRole("radio", { name: /4 כוכבים/ }).click();
-  await p.locator("#title").fill("קורס מסודר עם מרצה זמין");
-  await p.locator("#body").fill(body);
+  await p.locator("#body").fill(`קורס מסודר עם מרצה זמין. ${body}`);
+  await p.getByText("פרטי רכישה").click();
   await p.locator('input[name="amountPaid"]').fill("3400");
   await p
     .locator('input[type="file"]')
     .setInputFiles({ name: "receipt.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 test") });
-  await p.locator('input[name="agreed"]').check();
   await shot(p, "03-review-form");
   await p.getByRole("button", { name: "פרסום הביקורת" }).click();
   await p.getByText("תודה, הביקורת פורסמה").waitFor();
@@ -141,13 +147,24 @@ await step("review: moderation warning and pending status", async () => {
   const p = await pageFor(alice);
   await p.goto(`${BASE}/company/signal-bot-pro/review`);
   await p.getByRole("radio", { name: /1 כוכבים/ }).click();
-  await p.locator("#title").fill("לא מומלץ בכלל");
-  await p.locator("#body").fill(`${body} אלה נוכלים.`);
+  await p.locator("#body").fill(`לא מומלץ בכלל. ${body} אלה נוכלים.`);
   await p.getByText("תעבור בדיקה ידנית").waitFor();
   await p.locator('input[name="paid"]').uncheck();
-  await p.locator('input[name="agreed"]').check();
   await p.getByRole("button", { name: "פרסום הביקורת" }).click();
   await p.getByText("תודה, הביקורת התקבלה").waitFor();
+  await p.context().close();
+});
+
+await step("review: a quick star-only rating counts but isn't listed", async () => {
+  const p = await pageFor(bob, { width: 390, height: 844 });
+  await p.goto(`${BASE}/company/gal-trade-algo/review`);
+  await p.getByRole("radio", { name: /2 כוכבים/ }).click();
+  await shot(p, "03b-quick-rating-mobile");
+  await p.getByRole("button", { name: "פרסום הדירוג" }).click();
+  await p.getByText("תודה, הדירוג נקלט").waitFor();
+  await p.goto(`${BASE}/company/gal-trade-algo`);
+  await p.getByText("ועוד דירוג אחד בלי טקסט").waitFor();
+  await p.getByText("3 מתוך 10").waitFor();
   await p.context().close();
 });
 
@@ -250,7 +267,6 @@ await step("admin: create, edit and delete a company and a staff review", async 
   await p.getByRole("link", { name: "הוספת ביקורת" }).click();
   await p.locator('input[name="authorName"]:visible').fill("יעל מ.");
   await p.getByRole("radio", { name: /5 כוכבים/ }).click();
-  await p.locator('input[name="title"]:visible').fill("ביקורת שהועברה באישור");
   await p.locator('textarea[name="body"]:visible').fill(body);
   await p.getByRole("button", { name: "יצירת ביקורת" }).click();
   await p.getByText("הביקורת נוצרה").waitFor();
@@ -267,7 +283,7 @@ await step("admin: create, edit and delete a company and a staff review", async 
   await p.getByText("נשמר.").filter({ visible: true }).first().waitFor();
   const pub2 = await pageFor(null);
   await pub2.goto(`${BASE}/company/panel-${run}`);
-  await pub2.getByText("עדיין אין ביקורות").waitFor();
+  await pub2.getByText("עדיין אין דירוגים").waitFor();
   await pub2.context().close();
 
   await p.goto(`${BASE}/admin/companies?q=panel-${run}`);
@@ -309,9 +325,8 @@ await step("account: rename, edit own review, delete account", async () => {
   await p.getByText("נשמר.").filter({ visible: true }).first().waitFor();
   await shot(p, "13-account-mobile");
   await p.goto(`${BASE}/company/green-candle/review`);
-  await p.getByRole("heading", { name: /עריכת הביקורת שלך/ }).waitFor();
-  await p.locator("#title").fill("קורס מסודר עם מרצה זמין מאוד");
-  await p.locator('input[name="agreed"]').check();
+  await p.getByRole("heading", { name: /עריכת הדירוג שלך/ }).waitFor();
+  await p.locator("#body").fill(`קורס מסודר עם מרצה זמין מאוד. ${body}`);
   await p.getByRole("button", { name: "שמירת השינויים" }).click();
   await p.getByText("תודה, הביקורת פורסמה").waitFor();
   await p.goto(`${BASE}/account`);

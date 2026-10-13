@@ -57,13 +57,12 @@ lines.push("");
 
 for (const r of data.reviews) {
   lines.push(
-    `insert into public.reviews (id, company_id, user_id, author_name, rating, title, body, paid, amount_paid, verified_purchase, status, created_at) values (${[
+    `insert into public.reviews (id, company_id, user_id, author_name, rating, body, paid, amount_paid, verified_purchase, status, created_at) values (${[
       r.id,
       r.companyId,
       uid(`author:${r.authorName}`),
       r.authorName,
       r.rating,
-      r.title,
       r.body,
       r.paid,
       r.amountPaid,
@@ -81,6 +80,28 @@ for (const r of data.reviews) {
   }
 }
 
+// Star-only ratings (no text) so some demo companies cross the 10-rating
+// threshold and show a score, while others stay below it.
+const extraRatings = {
+  "green-candle": [5, 5, 4, 5, 4, 5, 3, 5, 4],
+  "signal-bot-pro": [1, 1, 2, 1, 1, 5, 1, 1],
+};
+let extra = 0;
+for (const [slug, ratings] of Object.entries(extraRatings)) {
+  const company = data.companies.find((c) => c.slug === slug);
+  for (const [i, rating] of ratings.entries()) {
+    const id = uid(`rater:${slug}:${i}`);
+    const name = `מדרג/ת ${i + 1}`;
+    lines.push(
+      `insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at) values ('00000000-0000-0000-0000-000000000000', ${q(id)}, 'authenticated', 'authenticated', ${q(`rater-${slug}-${i}@example.com`)}, '', now(), '{"provider":"email","providers":["email"]}', ${q(JSON.stringify({ full_name: name }))}, now(), now());`,
+      `insert into public.reviews (company_id, user_id, author_name, rating, status) values (${[company.id, id, name, rating, "published"].map(q).join(", ")});`,
+    );
+    extra++;
+  }
+}
+
 lines.push("", "select set_config('smoch.internal', 'off', false);", "");
 writeFileSync(new URL("../supabase/seed.sql", import.meta.url), lines.join("\n"));
-console.log(`seed.sql: ${authors.length} users, ${data.companies.length} companies, ${data.reviews.length} reviews`);
+console.log(
+  `seed.sql: ${authors.length + extra} users, ${data.companies.length} companies, ${data.reviews.length} reviews + ${extra} star-only ratings`,
+);

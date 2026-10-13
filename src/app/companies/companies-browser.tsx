@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { categories, categoryIds, isCategory } from "@/lib/format";
+import { categories, categoryIds, hasScore, isCategory } from "@/lib/format";
 import type { Company } from "@/lib/types";
 import { CompanyCard } from "@/components/company-card";
 import { SearchBox } from "@/components/search-box";
@@ -41,9 +41,9 @@ export function CompaniesBrowser({ companies }: { companies: Company[] }) {
         !needle || `${c.name} ${c.tagline} ${c.registryId ?? ""} ${c.website ?? ""}`.toLowerCase().includes(needle),
     )
     .sort((a, b) => {
-      // Companies without reviews always sink to the bottom of score sorts.
-      const ra = a.stats.reviewCount > 0,
-        rb = b.stats.reviewCount > 0;
+      // Companies without a public score always sink to the bottom of score sorts.
+      const ra = hasScore(a.stats),
+        rb = hasScore(b.stats);
       if (sort !== "reviews" && ra !== rb) return ra ? -1 : 1;
       if (sort === "low") return a.stats.trustScore - b.stats.trustScore;
       if (sort === "reviews") return b.stats.reviewCount - a.stats.reviewCount;

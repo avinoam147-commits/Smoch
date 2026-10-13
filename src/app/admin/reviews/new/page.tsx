@@ -26,7 +26,6 @@ export default async function NewReviewPage({ searchParams }: PageProps<"/admin/
           companyId,
           authorName: "",
           rating: 0,
-          title: "",
           body: "",
           paid: true,
           amountPaid: "",

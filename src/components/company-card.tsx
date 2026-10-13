@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { categories } from "@/lib/format";
+import { categories, hasScore, MIN_RATINGS_FOR_SCORE } from "@/lib/format";
 import type { Company } from "@/lib/types";
 import { Stars } from "./stars";
 import { ScoreBadge } from "./score-badge";
@@ -20,14 +20,18 @@ export function CompanyCard({ company }: { company: Company }) {
       </div>
       {company.tagline && <p className="line-clamp-2 text-sm text-muted">{company.tagline}</p>}
       <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
-        {reviewCount > 0 ? (
+        {hasScore(company.stats) ? (
           <>
             <Stars value={trustScore} size="sm" />
             <ScoreBadge score={trustScore} />
-            <span className="text-xs text-muted">· {reviewCount.toLocaleString("he-IL")} ביקורות</span>
+            <span className="text-xs text-muted">· {reviewCount.toLocaleString("he-IL")} דירוגים</span>
           </>
+        ) : reviewCount > 0 ? (
+          <span className="text-sm text-muted">
+            {reviewCount.toLocaleString("he-IL")} דירוגים · ציון יוצג מ-{MIN_RATINGS_FOR_SCORE}
+          </span>
         ) : (
-          <span className="text-sm text-muted">אין עדיין ביקורות</span>
+          <span className="text-sm text-muted">אין עדיין דירוגים</span>
         )}
       </div>
     </Link>

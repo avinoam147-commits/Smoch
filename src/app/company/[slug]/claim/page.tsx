@@ -2,14 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getCompanyBySlug, getStaticCompanySlugs } from "@/lib/queries";
+import { getCompanyBySlug } from "@/lib/queries";
 import { getViewer } from "@/lib/auth";
 import { GoogleButton } from "@/components/google-button";
 import { ClaimForm } from "./claim-form";
-
-export async function generateStaticParams() {
-  return getStaticCompanySlugs();
-}
 
 export const metadata: Metadata = { title: "בקשת ניהול דף חברה", robots: { index: false } };
 

@@ -18,7 +18,7 @@ const verbs: Record<string, string> = { insert: "יצירת", update: "עדכו�
 
 function label(row: Record<string, unknown> | null) {
   if (!row) return "";
-  const v = row.name ?? row.title ?? row.display_name ?? row.key ?? "";
+  const v = row.name ?? (row.body ? String(row.body).slice(0, 40) : null) ?? row.display_name ?? row.key ?? "";
   return v ? ` ״${String(v).slice(0, 60)}״` : "";
 }
 

@@ -26,7 +26,7 @@ export function SiteFooter() {
             </li>
             <li>
               <Link className="hover:text-ink" href="/guidelines">
-                כללי כתיבת ביקורת
+                כללי האתר
               </Link>
             </li>
           </ul>

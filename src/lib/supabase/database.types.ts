@@ -450,7 +450,7 @@ export type Database = {
           added_by: string | null;
           amount_paid: number | null;
           author_name: string;
-          body: string;
+          body: string | null;
           company_id: string;
           created_at: string;
           edited_at: string | null;
@@ -462,7 +462,6 @@ export type Database = {
           rating: number;
           source: string;
           status: string;
-          title: string;
           updated_at: string;
           user_id: string | null;
           verified_purchase: boolean;
@@ -472,7 +471,7 @@ export type Database = {
           added_by?: string | null;
           amount_paid?: number | null;
           author_name: string;
-          body: string;
+          body?: string | null;
           company_id: string;
           created_at?: string;
           edited_at?: string | null;
@@ -484,7 +483,6 @@ export type Database = {
           rating: number;
           source?: string;
           status?: string;
-          title: string;
           updated_at?: string;
           user_id?: string | null;
           verified_purchase?: boolean;
@@ -493,7 +491,7 @@ export type Database = {
           added_by?: string | null;
           amount_paid?: number | null;
           author_name?: string;
-          body?: string;
+          body?: string | null;
           company_id?: string;
           created_at?: string;
           edited_at?: string | null;
@@ -505,7 +503,6 @@ export type Database = {
           rating?: number;
           source?: string;
           status?: string;
-          title?: string;
           updated_at?: string;
           user_id?: string | null;
           verified_purchase?: boolean;
@@ -539,6 +536,7 @@ export type Database = {
           r5: number | null;
           raw_average: number | null;
           review_count: number | null;
+          text_count: number | null;
           trust_score: number | null;
         };
         ComputedFields: never;
@@ -564,6 +562,7 @@ export type Database = {
       is_banned: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_company_member: { Args: { cid: string }; Returns: boolean };
       is_internal: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_service: { Args: Record<PropertyKey, never>; Returns: boolean };
       make_display_name: { Args: { full_name: string }; Returns: string };
       moderation_reason: { Args: { t: string }; Returns: string };
       phone_verified: { Args: Record<PropertyKey, never>; Returns: boolean };

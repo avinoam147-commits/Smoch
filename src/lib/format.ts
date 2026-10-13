@@ -13,6 +13,23 @@ export function isCategory(v: unknown): v is CategoryId {
   return typeof v === "string" && (categoryIds as string[]).includes(v);
 }
 
+/**
+ * Below this many ratings the score isn't shown: a handful of ratings can be
+ * one unhappy customer or a few friends of the owner. Explained on the page.
+ */
+export const MIN_RATINGS_FOR_SCORE = 10;
+
+export function hasScore(stats: { reviewCount: number }) {
+  return stats.reviewCount >= MIN_RATINGS_FOR_SCORE;
+}
+
+/** First words of a review, for lists and emails. */
+export function excerpt(body: string | null | undefined, max = 60) {
+  if (!body) return "דירוג בלי טקסט";
+  const t = body.replace(/\s+/g, " ").trim();
+  return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t;
+}
+
 export type Tone = "great" | "good" | "mixed" | "poor" | "bad";
 
 export function scoreTone(score: number): { tone: Tone; label: string } {

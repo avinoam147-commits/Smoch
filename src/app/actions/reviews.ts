@@ -1,26 +1,19 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
-import { tags } from "@/lib/queries";
 import { friendlyError } from "@/lib/errors";
 import { notifyNewReview, notifyReplyPosted } from "@/lib/notify";
 import { reportReasons, type ReportReason } from "@/lib/format";
-
-function refresh() {
-  updateTag(tags.reviews);
-  updateTag(tags.companies);
-}
 
 const reviewSchema = z.object({
   reviewId: z.string().uuid().optional().or(z.literal("")),
   companyId: z.string().uuid(),
   rating: z.coerce.number().int().min(1, "בחרו דירוג").max(5),
-  title: z.string().trim().min(4, "כתבו כותרת של 4 תווים לפחות").max(120, "הכותרת ארוכה מדי"),
-  body: z.string().trim().min(80, "הביקורת צריכה להכיל לפחות 80 תווים").max(5000, "הביקורת ארוכה מדי"),
+  // Written text is optional: a star rating on its own is a valid review.
+  body: z.string().trim().max(5000, "הביקורת ארוכה מדי").optional(),
   paid: z.enum(["on"]).optional(),
   amountPaid: z
     .string()
@@ -33,7 +26,6 @@ const reviewSchema = z.object({
     .regex(/^\d{4}-\d{2}(-\d{2})?$/)
     .optional()
     .or(z.literal("")),
-  agreed: z.literal("on", { message: "צריך לאשר את כללי הכתיבה" }),
 });
 
 export type SaveReviewResult =
@@ -55,8 +47,7 @@ export async function saveReview(_: unknown, formData: FormData): Promise<SaveRe
   const row = {
     company_id: v.companyId,
     rating: v.rating,
-    title: v.title,
-    body: v.body,
+    body: v.body || null,
     paid,
     amount_paid: paid && v.amountPaid ? Number(v.amountPaid) : null,
     experience_date: v.experienceDate
@@ -72,8 +63,6 @@ export async function saveReview(_: unknown, formData: FormData): Promise<SaveRe
     : supabase.from("reviews").insert({ ...row, author_name: viewer.displayName });
   const { data, error } = await query.select("id, status, moderation_note").single();
   if (error || !data) return { ok: false, message: friendlyError(error) };
-
-  refresh();
   if (data.status === "published" && !v.reviewId) after(() => notifyNewReview(data.id));
   return { ok: true, reviewId: data.id, status: data.status, note: data.moderation_note };
 }
@@ -88,7 +77,6 @@ export async function deleteMyReview(reviewId: string) {
   if (paths.length) await supabase.storage.from("receipts").remove(paths);
   const { error } = await supabase.from("reviews").delete().eq("id", reviewId).eq("user_id", viewer.id);
   if (error) return { ok: false, message: friendlyError(error) };
-  refresh();
   return { ok: true };
 }
 
@@ -100,7 +88,6 @@ export async function toggleHelpful(reviewId: string, on: boolean) {
     ? await supabase.from("review_votes").insert({ review_id: reviewId, user_id: viewer.id })
     : await supabase.from("review_votes").delete().eq("review_id", reviewId).eq("user_id", viewer.id);
   if (error && error.code !== "23505") return { ok: false, message: friendlyError(error) };
-  updateTag(tags.reviews);
   return { ok: true };
 }
 
@@ -147,7 +134,6 @@ export async function saveReply(reviewId: string, body: string) {
     ? await supabase.from("review_replies").update({ body: text }).eq("review_id", reviewId)
     : await supabase.from("review_replies").insert({ review_id: reviewId, body: text, company_id: review.company_id });
   if (error) return { ok: false, message: friendlyError(error) };
-  updateTag(tags.reviews);
   if (!existing) after(() => notifyReplyPosted(reviewId));
   return { ok: true };
 }
@@ -158,6 +144,5 @@ export async function deleteReply(reviewId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("review_replies").delete().eq("review_id", reviewId);
   if (error) return { ok: false, message: friendlyError(error) };
-  updateTag(tags.reviews);
   return { ok: true };
 }

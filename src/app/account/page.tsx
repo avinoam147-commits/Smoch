@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { requireViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/format";
+import { excerpt, formatDate } from "@/lib/format";
 import { Stars } from "@/components/stars";
 import { StatusChip } from "@/components/status-chip";
 import { ProfileForm } from "./profile-form";
@@ -30,7 +30,7 @@ async function Account() {
     supabase
       .from("reviews")
       .select(
-        "id, rating, title, status, moderation_note, verified_purchase, created_at, companies(name, slug), receipts(status)",
+        "id, rating, body, status, moderation_note, verified_purchase, created_at, companies(name, slug), receipts(status)",
       )
       .eq("user_id", viewer.id)
       .order("created_at", { ascending: false }),
@@ -70,7 +70,7 @@ async function Account() {
             {reviews.data.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{r.title}</p>
+                  <p className="truncate font-medium">{excerpt(r.body)}</p>
                   <p className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-muted">
                     <Stars value={r.rating} size="sm" />
                     {r.companies?.name} · {formatDate(r.created_at)}

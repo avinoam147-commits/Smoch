@@ -1,6 +1,7 @@
 import "server-only";
 import { createServiceClient } from "./supabase/service";
 import { siteName, siteUrl } from "./site";
+import { excerpt } from "./format";
 
 // Transactional email. Silently skipped until RESEND_API_KEY and the
 // Supabase secret key are configured, so nothing here can block a request.
@@ -67,7 +68,7 @@ export function notifyReplyPosted(reviewId: string) {
     if (!admin) return;
     const { data } = await admin
       .from("reviews")
-      .select("user_id, title, companies(name, slug)")
+      .select("user_id, body, rating, companies(name, slug)")
       .eq("id", reviewId)
       .single();
     if (!data?.user_id || !data.companies) return;
@@ -75,10 +76,14 @@ export function notifyReplyPosted(reviewId: string) {
       await send(
         to,
         `${data.companies.name} הגיבו לביקורת שלך`,
-        layout(`${data.companies.name} הגיבו לביקורת שלך`, [`על הביקורת: ״${data.title}״`], {
-          label: "לצפייה בתגובה",
-          href: `${siteUrl}/company/${data.companies.slug}#review-${reviewId}`,
-        }),
+        layout(
+          `${data.companies.name} הגיבו לביקורת שלך`,
+          [`על הביקורת: ${data.rating} כוכבים${data.body ? `, ״${excerpt(data.body, 80)}״` : ""}`],
+          {
+            label: "לצפייה בתגובה",
+            href: `${siteUrl}/company/${data.companies.slug}#review-${reviewId}`,
+          },
+        ),
       );
     }
   });
@@ -90,7 +95,7 @@ export function notifyNewReview(reviewId: string) {
     if (!admin) return;
     const { data } = await admin
       .from("reviews")
-      .select("status, company_id, rating, title, companies(name, slug)")
+      .select("status, company_id, rating, body, companies(name, slug)")
       .eq("id", reviewId)
       .single();
     if (!data || data.status !== "published" || !data.companies) return;
@@ -101,7 +106,10 @@ export function notifyNewReview(reviewId: string) {
         `ביקורת חדשה על ${data.companies.name}`,
         layout(
           `ביקורת חדשה על ${data.companies.name}`,
-          [`${data.rating} כוכבים: ״${data.title}״`, "אפשר להגיב לביקורת בפומבי מדף החברה."],
+          [
+            `${data.rating} כוכבים${data.body ? `: ״${excerpt(data.body, 120)}״` : " (בלי טקסט)"}`,
+            "אפשר להגיב לביקורות בפומבי מדף החברה.",
+          ],
           {
             label: "לביקורת",
             href: `${siteUrl}/company/${data.companies.slug}#review-${reviewId}`,

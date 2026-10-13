@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CalendarDays, ExternalLink, Hash, MapPin, PenLine, Wallet, AtSign } from "lucide-react";
-import { categories, displayHost, externalHref, scoreTone } from "@/lib/format";
-import { getCompanyBySlug, getCompanyReviews, getStaticCompanySlugs } from "@/lib/queries";
+import { categories, displayHost, externalHref, hasScore, MIN_RATINGS_FOR_SCORE, scoreTone } from "@/lib/format";
+import { getCompanyBySlug, getCompanyReviews } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { siteUrl } from "@/lib/site";
 import type { Company, Review } from "@/lib/types";
@@ -14,10 +14,6 @@ import { ClaimedBadge, RegistryBadge } from "@/components/badges";
 import { CompanyViewerProvider } from "@/components/viewer-context";
 import { ReviewsSection } from "./reviews-section";
 
-export async function generateStaticParams() {
-  return getStaticCompanySlugs();
-}
-
 export async function generateMetadata({ params }: PageProps<"/company/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const company = await getCompanyBySlug(decodeURIComponent(slug));
@@ -25,10 +21,9 @@ export async function generateMetadata({ params }: PageProps<"/company/[slug]">)
   const { reviewCount, trustScore } = company.stats;
   return {
     title: `${company.name}: ביקורות ודירוג`,
-    description:
-      reviewCount > 0
-        ? `${reviewCount} ביקורות על ${company.name}. ציון אמינות ${trustScore.toFixed(1)} מתוך 5. ${company.tagline}`
-        : `ביקורות ודירוג על ${company.name}. ${company.tagline}`,
+    description: hasScore(company.stats)
+      ? `${reviewCount} דירוגים של ${company.name}. ציון אמינות ${trustScore.toFixed(1)} מתוך 5. ${company.tagline}`
+      : `ביקורות ודירוג על ${company.name}. ${company.tagline}`,
     alternates: { canonical: `/company/${company.slug}` },
   };
 }
@@ -84,7 +79,7 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
                 className="pressable inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 font-medium text-accent-ink hover:opacity-90"
               >
                 <PenLine className="size-4" aria-hidden />
-                כתיבת ביקורת
+                דירוג החברה
               </Link>
               {company.website && (
                 <a
@@ -100,8 +95,8 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
             </div>
           </div>
 
-          <div className="mt-8 grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-            {reviewCount > 0 ? (
+          {hasScore(company.stats) ? (
+            <div className="mt-8 grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
               <div>
                 <p className="text-sm text-muted">ציון אמינות</p>
                 <div className="mt-1 flex items-baseline gap-3">
@@ -112,25 +107,25 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
                   <Stars value={trustScore} size="lg" />
                 </div>
                 <p className="mt-3 text-sm text-muted">
-                  מבוסס על {reviewCount.toLocaleString("he-IL")} ביקורות. ממוצע גולמי {rawAverage.toFixed(2)}.{" "}
+                  מבוסס על {reviewCount.toLocaleString("he-IL")} דירוגים. ממוצע גולמי {rawAverage.toFixed(2)}.{" "}
                   <Link href="/guidelines#score" className="text-accent hover:underline">
                     איך מחושב הציון?
                   </Link>
                 </p>
               </div>
-            ) : (
-              <div>
-                <p className="text-sm text-muted">ציון אמינות</p>
-                <p className="mt-2 text-xl font-semibold">אין עדיין ביקורות</p>
-                <p className="mt-1 text-sm text-muted">הציון יופיע אחרי הביקורת הראשונה.</p>
-              </div>
-            )}
-            <Distribution distribution={distribution} total={reviewCount} />
-          </div>
+              <Distribution distribution={distribution} total={reviewCount} />
+            </div>
+          ) : (
+            <ScorePending count={reviewCount} />
+          )}
         </section>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <ReviewsSection company={{ slug: company.slug, name: company.name }} reviews={reviews} />
+          <ReviewsSection
+            company={{ slug: company.slug, name: company.name }}
+            reviews={reviews}
+            starOnlyCount={Math.max(0, reviewCount - company.stats.textCount)}
+          />
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-line bg-surface p-5">
@@ -180,6 +175,38 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
   );
 }
 
+function ScorePending({ count }: { count: number }) {
+  const missing = MIN_RATINGS_FOR_SCORE - count;
+  return (
+    <div className="mt-8 border-t border-line pt-8">
+      <p className="text-sm text-muted">ציון אמינות</p>
+      <p className="mt-1 text-xl font-semibold">
+        {count === 0 ? "עדיין אין דירוגים" : `הציון יוצג אחרי ${MIN_RATINGS_FOR_SCORE} דירוגים`}
+      </p>
+      <div
+        className="mt-4 flex max-w-sm gap-1.5"
+        role="img"
+        aria-label={`${count} מתוך ${MIN_RATINGS_FOR_SCORE} דירוגים`}
+      >
+        {Array.from({ length: MIN_RATINGS_FOR_SCORE }, (_, i) => (
+          <span key={i} className={`h-2 flex-1 rounded-full ${i < count ? "bg-accent" : "bg-surface-2"}`} />
+        ))}
+      </div>
+      <p className="mt-2 text-sm font-medium tabular-nums">
+        {count.toLocaleString("he-IL")} מתוך {MIN_RATINGS_FOR_SCORE} · חסרים עוד {missing}
+      </p>
+      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
+        <strong className="font-semibold text-ink">למה הציון מוסתר?</strong> ציון שמבוסס על מעט דירוגים יכול לשקף לקוח
+        אחד מאוכזב, או כמה חברים של בעלי החברה, ולהטעות. לכן עד שמצטברים {MIN_RATINGS_FOR_SCORE} דירוגים אנחנו לא מציגים
+        ציון ולא התפלגות, רק את הביקורות הכתובות עצמן. הכלל זהה לכל החברות באתר.{" "}
+        <Link href="/guidelines#score" className="text-accent hover:underline">
+          עוד על חישוב הציון
+        </Link>
+      </p>
+    </div>
+  );
+}
+
 function Distribution({ distribution, total }: { distribution: number[]; total: number }) {
   const tones = ["bg-bad", "bg-poor", "bg-mixed", "bg-good", "bg-great"];
   return (
@@ -223,7 +250,8 @@ function JsonLd({ company, reviews }: { company: Company; reviews: Review[] }) {
     description: company.tagline || undefined,
     ...(company.logoUrl && { logo: company.logoUrl }),
   };
-  if (company.stats.reviewCount > 0) {
+  // Search engines get the aggregate only once it is shown on the page.
+  if (hasScore(company.stats)) {
     data.aggregateRating = {
       "@type": "AggregateRating",
       ratingValue: company.stats.rawAverage.toFixed(1),
@@ -235,8 +263,7 @@ function JsonLd({ company, reviews }: { company: Company; reviews: Review[] }) {
       "@type": "Review",
       author: { "@type": "Person", name: r.authorName },
       datePublished: r.createdAt.slice(0, 10),
-      name: r.title,
-      reviewBody: r.body,
+      reviewBody: r.body ?? undefined,
       reviewRating: { "@type": "Rating", ratingValue: r.rating, bestRating: 5, worstRating: 1 },
     }));
   }

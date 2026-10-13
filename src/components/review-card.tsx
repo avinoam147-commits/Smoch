@@ -44,8 +44,11 @@ export function ReviewCard({
           </Link>
         )}
       </div>
-      <h3 className="mt-2 font-semibold text-pretty">{review.title}</h3>
-      <p className="mt-1.5 whitespace-pre-line leading-relaxed text-pretty text-ink/85">{review.body}</p>
+      {review.body ? (
+        <p className="mt-3 whitespace-pre-line leading-relaxed text-pretty text-ink/85">{review.body}</p>
+      ) : (
+        <p className="mt-3 text-sm text-muted">דירוג בלי טקסט</p>
+      )}
       {(review.amountPaid != null || review.experienceDate || !review.paid) && (
         <p className="mt-3 text-xs text-muted">
           {!review.paid && "לא רכש/ה מהחברה"}

@@ -113,7 +113,7 @@ test("reviews: server decides author, status and verified flag", async () => {
       company_id: c.id,
       author_name: "מישהו אחר",
       rating: 4,
-      title: "כותרת טובה",
+
       body: longBody,
       verified_purchase: true,
       helpful_count: 999,
@@ -133,8 +133,41 @@ test("reviews: server decides author, status and verified flag", async () => {
 
   const dup = await alice.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 1, title: "שוב פעם", body: longBody });
+    .insert({ company_id: c.id, author_name: "x", rating: 1, body: longBody });
   assert.equal(dup.error?.code, "23505", "one review per user per company");
+});
+
+test("reviews: a star rating without text is valid and published", async () => {
+  const c = await newCompany();
+  const { data, error } = await alice.client
+    .from("reviews")
+    .insert({ company_id: c.id, author_name: "x", rating: 4 })
+    .select()
+    .single();
+  assert.ifError(error);
+  assert.equal(data.body, null);
+  assert.equal(data.status, "published");
+
+  const c2 = await newCompany();
+  const { data: blank } = await bob.client
+    .from("reviews")
+    .insert({ company_id: c2.id, author_name: "x", rating: 3, body: "   " })
+    .select()
+    .single();
+  assert.equal(blank.body, null, "whitespace-only text is stored as no text");
+
+  const { data: stats } = await anon
+    .from("company_stats")
+    .select("review_count, text_count")
+    .eq("company_id", c.id)
+    .single();
+  assert.equal(stats.review_count, 1);
+  assert.equal(stats.text_count, 0);
+
+  const tooLong = await carol.client
+    .from("reviews")
+    .insert({ company_id: c.id, author_name: "x", rating: 3, body: "א".repeat(5001) });
+  assert.ok(tooLong.error, "text is capped at 5000 characters");
 });
 
 test("reviews: phone numbers, links and accusations are held for moderation", async () => {
@@ -142,7 +175,7 @@ test("reviews: phone numbers, links and accusations are held for moderation", as
     const c = await newCompany();
     const { data, error } = await bob.client
       .from("reviews")
-      .insert({ company_id: c.id, author_name: "x", rating: 1, title: "כותרת", body: `${longBody} ${text}` })
+      .insert({ company_id: c.id, author_name: "x", rating: 1, body: `${longBody} ${text}` })
       .select()
       .single();
     assert.ifError(error);
@@ -157,7 +190,7 @@ test("reviews: owners edit content only; moderators' decisions stick", async () 
   const c = await newCompany();
   const { data: r } = await carol.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 2, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 2, body: longBody })
     .select()
     .single();
 
@@ -179,7 +212,7 @@ test("reviews: owners edit content only; moderators' decisions stick", async () 
   await admin.client.from("reviews").update({ status: "hidden", moderation_note: "הפרה" }).eq("id", r.id);
   const { data: again } = await carol.client
     .from("reviews")
-    .update({ title: "כותרת חדשה" })
+    .update({ body: "טקסט חדש" })
     .eq("id", r.id)
     .select()
     .single();
@@ -193,18 +226,18 @@ test("reviews: daily rate limit and phone requirement are enforced", async () =>
   const c2 = await newCompany();
   const ok = await dave.client
     .from("reviews")
-    .insert({ company_id: c1.id, author_name: "x", rating: 5, title: "כותרת", body: longBody });
+    .insert({ company_id: c1.id, author_name: "x", rating: 5, body: longBody });
   assert.ifError(ok.error);
   const limited = await dave.client
     .from("reviews")
-    .insert({ company_id: c2.id, author_name: "x", rating: 5, title: "כותרת", body: longBody });
+    .insert({ company_id: c2.id, author_name: "x", rating: 5, body: longBody });
   assert.match(limited.error?.message ?? "", /rate_limited/);
   await setSetting("reviews_per_day", 50);
 
   await setSetting("require_phone_for_reviews", true);
   const phoneless = await dave.client
     .from("reviews")
-    .insert({ company_id: c2.id, author_name: "x", rating: 5, title: "כותרת", body: longBody });
+    .insert({ company_id: c2.id, author_name: "x", rating: 5, body: longBody });
   assert.match(phoneless.error?.message ?? "", /phone_required/);
   await setSetting("require_phone_for_reviews", false);
 });
@@ -213,7 +246,7 @@ test("reviews: can't review a company that isn't published", async () => {
   const c = await newCompany("pending");
   const res = await bob.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 5, title: "כותרת", body: longBody });
+    .insert({ company_id: c.id, author_name: "x", rating: 5, body: longBody });
   assert.ok(res.error);
 });
 
@@ -221,7 +254,7 @@ test("votes: count is maintained and self-votes are blocked", async () => {
   const c = await newCompany();
   const { data: r } = await alice.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 5, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 5, body: longBody })
     .select()
     .single();
   const self = await alice.client.from("review_votes").insert({ review_id: r.id, user_id: alice.id });
@@ -242,7 +275,7 @@ test("reports: one per user, private to reporter and admins", async () => {
   const c = await newCompany();
   const { data: r } = await alice.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 1, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 1, body: longBody })
     .select()
     .single();
   const { data: rep, error } = await bob.client
@@ -263,7 +296,7 @@ test("claims and replies: only approved representatives reply", async () => {
   const c = await newCompany();
   const { data: r } = await alice.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 2, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 2, body: longBody })
     .select()
     .single();
 
@@ -302,7 +335,7 @@ test("claims and replies: only approved representatives reply", async () => {
   const other = await newCompany();
   const { data: r2 } = await bob.client
     .from("reviews")
-    .insert({ company_id: other.id, author_name: "x", rating: 2, title: "כותרת", body: longBody })
+    .insert({ company_id: other.id, author_name: "x", rating: 2, body: longBody })
     .select()
     .single();
   const cross = await carol.client.from("review_replies").insert({ review_id: r2.id, company_id: c.id, body: "תגובה" });
@@ -313,7 +346,7 @@ test("receipts: private storage, admin approval sets verified purchase", async (
   const c = await newCompany();
   const { data: r } = await bob.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 4, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 4, body: longBody })
     .select()
     .single();
   const file = new Blob(["%PDF-1.4 test"], { type: "application/pdf" });
@@ -355,7 +388,7 @@ test("admin: staff reviews are labelled and every admin change is audited", asyn
       company_id: c.id,
       author_name: "יעל מ.",
       rating: 5,
-      title: "הועבר באישור",
+
       body: longBody,
       status: "published",
     })
@@ -389,9 +422,7 @@ test("stats: trust score is a weighted Bayesian average of published reviews", a
   const c = await newCompany();
   const users = await Promise.all(["s1", "s2", "s3"].map(makeUser));
   for (const u of users) {
-    await u.client
-      .from("reviews")
-      .insert({ company_id: c.id, author_name: "x", rating: 5, title: "כותרת", body: longBody });
+    await u.client.from("reviews").insert({ company_id: c.id, author_name: "x", rating: 5, body: longBody });
   }
   const { data } = await anon.from("company_stats").select("*").eq("company_id", c.id).single();
   assert.equal(data.review_count, 3);
@@ -406,7 +437,7 @@ test("banned users can't write", async () => {
   const c = await newCompany();
   const res = await eve.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 1, title: "כותרת", body: longBody });
+    .insert({ company_id: c.id, author_name: "x", rating: 1, body: longBody });
   assert.match(res.error?.message ?? "", /suspended/);
   const sug = await eve.client.from("companies").insert({ slug: `ban-${run}`, name: "חסומה", category: "algo" });
   assert.match(sug.error?.message ?? "", /suspended/);
@@ -417,7 +448,7 @@ test("delete_my_account removes the user and their reviews", async () => {
   const c = await newCompany();
   const { data: r } = await frank.client
     .from("reviews")
-    .insert({ company_id: c.id, author_name: "x", rating: 3, title: "כותרת", body: longBody })
+    .insert({ company_id: c.id, author_name: "x", rating: 3, body: longBody })
     .select()
     .single();
   assert.ifError((await frank.client.rpc("delete_my_account")).error);

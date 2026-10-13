@@ -1,24 +1,28 @@
 import "server-only";
-import { cacheLife, cacheTag } from "next/cache";
+import { cache } from "react";
+import { connection } from "next/server";
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/env";
 import type { Database } from "./supabase/database.types";
 import type { CategoryId, Company, CompanyStats, Review, ReviewWithCompany } from "./types";
 import { demoCompanies, demoReviews, demoReviewsWithCompany } from "./demo-data";
 
-// Public, cached reads. Everything here is the same for every visitor, so it
-// uses the anonymous client and is invalidated by tag after each mutation.
-export const tags = {
-  companies: "companies",
-  reviews: "reviews",
-} as const;
+// Public reads. They run on every request (no server-side page cache), so a
+// new rating shows up immediately for everyone, on every server instance.
+// React cache() dedupes repeated calls within one request (page + metadata).
 
 type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
 type StatsRow = Database["public"]["Views"]["company_stats"]["Row"];
 type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];
 type ReplyRow = Database["public"]["Tables"]["review_replies"]["Row"];
 
-const emptyStats: CompanyStats = { reviewCount: 0, distribution: [0, 0, 0, 0, 0], rawAverage: 0, trustScore: 3 };
+const emptyStats: CompanyStats = {
+  reviewCount: 0,
+  distribution: [0, 0, 0, 0, 0],
+  rawAverage: 0,
+  trustScore: 3,
+  textCount: 0,
+};
 
 export function toStats(s: StatsRow | undefined | null): CompanyStats {
   if (!s) return emptyStats;
@@ -27,6 +31,7 @@ export function toStats(s: StatsRow | undefined | null): CompanyStats {
     distribution: [s.r1 ?? 0, s.r2 ?? 0, s.r3 ?? 0, s.r4 ?? 0, s.r5 ?? 0],
     rawAverage: s.raw_average ?? 0,
     trustScore: s.trust_score ?? 3,
+    textCount: s.text_count ?? 0,
   };
 }
 
@@ -58,7 +63,6 @@ export function toReview(r: ReviewRow & { review_replies?: ReplyRow | ReplyRow[]
     companyId: r.company_id,
     authorName: r.author_name,
     rating: r.rating,
-    title: r.title,
     body: r.body,
     paid: r.paid,
     amountPaid: r.amount_paid,
@@ -87,23 +91,17 @@ async function withStats(rows: CompanyRow[]): Promise<Company[]> {
   return rows.map((r) => toCompany(r, byId.get(r.id)));
 }
 
-export async function getPublishedCompanies(): Promise<Company[]> {
-  "use cache";
-  cacheTag(tags.companies, tags.reviews);
-  cacheLife("hours");
-
+export const getPublishedCompanies = cache(async (): Promise<Company[]> => {
+  await connection();
   if (!isSupabaseConfigured) return demoCompanies;
   const supabase = createPublicClient();
   const { data, error } = await supabase.from("companies").select("*").eq("status", "published").order("name");
   if (error) throw error;
   return withStats(data);
-}
+});
 
-export async function getCompanyBySlug(slug: string): Promise<Company | null> {
-  "use cache";
-  cacheTag(tags.companies, tags.reviews);
-  cacheLife("hours");
-
+export const getCompanyBySlug = cache(async (slug: string): Promise<Company | null> => {
+  await connection();
   if (!isSupabaseConfigured) return demoCompanies.find((c) => c.slug === slug) ?? null;
   const supabase = createPublicClient();
   const { data, error } = await supabase
@@ -116,15 +114,14 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
   if (!data) return null;
   const [company] = await withStats([data]);
   return company;
-}
+});
 
-export async function getCompanyReviews(companyId: string): Promise<Review[]> {
-  "use cache";
-  cacheTag(tags.reviews);
-  cacheLife("hours");
-
+export const getCompanyReviews = cache(async (companyId: string): Promise<Review[]> => {
+  await connection();
   if (!isSupabaseConfigured) {
-    return demoReviews.filter((r) => r.companyId === companyId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return demoReviews
+      .filter((r) => r.companyId === companyId && r.body)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
   const supabase = createPublicClient();
   const { data, error } = await supabase
@@ -132,17 +129,15 @@ export async function getCompanyReviews(companyId: string): Promise<Review[]> {
     .select("*, review_replies(*)")
     .eq("company_id", companyId)
     .eq("status", "published")
+    .not("body", "is", null)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
   return data.map(toReview);
-}
+});
 
-export async function getRecentReviews(limit = 4): Promise<ReviewWithCompany[]> {
-  "use cache";
-  cacheTag(tags.reviews, tags.companies);
-  cacheLife("hours");
-
+export const getRecentReviews = cache(async (limit: number = 4): Promise<ReviewWithCompany[]> => {
+  await connection();
   if (!isSupabaseConfigured) {
     return demoReviewsWithCompany()
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -153,19 +148,10 @@ export async function getRecentReviews(limit = 4): Promise<ReviewWithCompany[]> 
     .from("reviews")
     .select("*, review_replies(*), companies!inner(slug, name, status)")
     .eq("status", "published")
+    .not("body", "is", null)
     .eq("companies.status", "published")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
   return data.map((r) => ({ ...toReview(r), company: { slug: r.companies.slug, name: r.companies.name } }));
-}
-
-/** At least one slug is required by Cache Components; unknown slugs render on demand. */
-export async function getStaticCompanySlugs(): Promise<{ slug: string }[]> {
-  const companies = await getPublishedCompanies();
-  const top = [...companies]
-    .sort((a, b) => b.stats.reviewCount - a.stats.reviewCount)
-    .slice(0, 50)
-    .map((c) => ({ slug: c.slug }));
-  return top.length ? top : [{ slug: "placeholder" }];
-}
+});

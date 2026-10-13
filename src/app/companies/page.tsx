@@ -8,15 +8,19 @@ export const metadata: Metadata = {
   description: "קורסי מסחר, קבוצות איתותים, ליווי ובוטים בישראל, מדורגים לפי ציון האמינות של הלקוחות.",
 };
 
-export default async function CompaniesPage() {
-  const companies = await getPublishedCompanies();
+export default function CompaniesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-10">
       <h1 className="text-3xl font-extrabold tracking-tight">כל החברות</h1>
       <p className="mt-2 text-muted">קורסי מסחר, קבוצות איתותים, ליווי ובוטים, מדורגים לפי ציון האמינות.</p>
       <Suspense fallback={<div className="mt-8 h-96 rounded-2xl bg-surface-2" />}>
-        <CompaniesBrowser companies={companies} />
+        <CompaniesList />
       </Suspense>
     </div>
   );
+}
+
+async function CompaniesList() {
+  const companies = await getPublishedCompanies();
+  return <CompaniesBrowser companies={companies} />;
 }

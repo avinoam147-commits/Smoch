@@ -1,22 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { BadgeCheck, MessageSquareReply, ShieldCheck } from "lucide-react";
-import { categories, categoryIds } from "@/lib/format";
+import { categories, categoryIds, hasScore } from "@/lib/format";
 import { getPublishedCompanies, getRecentReviews } from "@/lib/queries";
 import { SearchBox } from "@/components/search-box";
 import { CompanyCard } from "@/components/company-card";
 import { ReviewCard } from "@/components/review-card";
 import { AccountDeletedNotice } from "@/components/account-deleted-notice";
 
-export default async function Home() {
-  const [companies, recent] = await Promise.all([getPublishedCompanies(), getRecentReviews(4)]);
-  // Only companies with enough reviews to mean something appear in the rankings.
-  const ranked = companies
-    .filter((c) => c.stats.reviewCount >= 3)
-    .sort((a, b) => b.stats.trustScore - a.stats.trustScore);
-  const top = ranked.slice(0, 3);
-  const lowest = ranked.length > 3 ? ranked.slice(-3).reverse() : [];
-
+export default function Home() {
   return (
     <>
       <Suspense>
@@ -53,6 +45,23 @@ export default async function Home() {
         </div>
       </section>
 
+      <Suspense fallback={<SectionsSkeleton />}>
+        <HomeSections />
+      </Suspense>
+    </>
+  );
+}
+
+/** Live data: rankings, the trust principles and the latest reviews. */
+async function HomeSections() {
+  const [companies, recent] = await Promise.all([getPublishedCompanies(), getRecentReviews(4)]);
+  // Rankings only include companies whose score is public (enough ratings).
+  const ranked = companies.filter((c) => hasScore(c.stats)).sort((a, b) => b.stats.trustScore - a.stats.trustScore);
+  const top = ranked.slice(0, 3);
+  const lowest = ranked.length > 3 ? ranked.slice(-3).reverse() : [];
+
+  return (
+    <>
       {top.length > 0 && (
         <section className="mx-auto mt-14 max-w-6xl px-4">
           <SectionHeading title="הכי מומלצים" href="/companies?sort=top" />
@@ -133,6 +142,16 @@ export default async function Home() {
         </section>
       )}
     </>
+  );
+}
+
+function SectionsSkeleton() {
+  return (
+    <div className="mx-auto mt-14 grid max-w-6xl animate-pulse gap-4 px-4 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-40 rounded-2xl bg-surface-2" />
+      ))}
+    </div>
   );
 }
 

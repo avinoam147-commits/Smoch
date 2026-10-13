@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatDateTime } from "@/lib/format";
+import { excerpt, formatDateTime } from "@/lib/format";
 import { Stars } from "@/components/stars";
 import { ActionButton } from "../_components/action-button";
 import { Empty, PageHeader, Panel } from "../_components/ui";
@@ -13,7 +13,7 @@ export default async function AdminReceipts() {
   const supabase = await createClient();
   const { data: rows } = await supabase
     .from("receipts")
-    .select("id, created_at, reviews(id, title, rating, author_name, amount_paid, companies(name))")
+    .select("id, created_at, reviews(id, body, rating, author_name, amount_paid, companies(name))")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
@@ -33,7 +33,7 @@ export default async function AdminReceipts() {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
                   {rc.reviews && <Stars value={rc.reviews.rating} size="sm" />}
                   <Link href={`/admin/reviews/${rc.reviews?.id}`} className="truncate hover:underline">
-                    {rc.reviews?.title}
+                    {excerpt(rc.reviews?.body)}
                   </Link>
                   <span className="text-muted">· {rc.reviews?.author_name}</span>
                   {rc.reviews?.amount_paid != null && (

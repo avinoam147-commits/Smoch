@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatDateTime, reportReasons, type ReportReason } from "@/lib/format";
+import { excerpt, formatDateTime, reportReasons, type ReportReason } from "@/lib/format";
 import { Stars } from "@/components/stars";
 import { StatusChip } from "@/components/status-chip";
 import { ActionButton } from "../_components/action-button";
@@ -16,7 +16,7 @@ export default async function AdminReports({ searchParams }: PageProps<"/admin/r
   let query = supabase
     .from("reports")
     .select(
-      "id, reason, details, status, resolution_note, created_at, reviews(id, title, body, rating, author_name, status, companies(name))",
+      "id, reason, details, status, resolution_note, created_at, reviews(id, body, rating, author_name, status, companies(name))",
     )
     .order("created_at", { ascending: status === "open" })
     .limit(200);
@@ -52,7 +52,7 @@ export default async function AdminReports({ searchParams }: PageProps<"/admin/r
                   <div className="flex flex-wrap items-center gap-2">
                     <Stars value={rep.reviews.rating} size="sm" />
                     <Link href={`/admin/reviews/${rep.reviews.id}`} className="font-medium hover:underline">
-                      {rep.reviews.title}
+                      {excerpt(rep.reviews.body, 40)}
                     </Link>
                     <span className="text-muted">
                       · {rep.reviews.author_name} על {rep.reviews.companies?.name}
