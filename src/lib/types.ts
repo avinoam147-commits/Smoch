@@ -33,6 +33,9 @@ export type Company = {
   stats: CompanyStats;
 };
 
+/** A company the admin picked for the home page. */
+export type FeaturedCompany = Company & { sponsored: boolean };
+
 export type Reply = { body: string; createdAt: string; updatedAt: string };
 
 export type Review = {

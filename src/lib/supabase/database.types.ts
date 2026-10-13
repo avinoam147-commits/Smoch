@@ -277,6 +277,49 @@ export type Database = {
           },
         ];
       };
+      featured_companies: {
+        Row: {
+          company_id: string;
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          position: number;
+          sponsored: boolean;
+        };
+        ComputedFields: never;
+        Insert: {
+          company_id: string;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          position?: number;
+          sponsored?: boolean;
+        };
+        Update: {
+          company_id?: string;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          position?: number;
+          sponsored?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "featured_companies_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: true;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "featured_companies_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: true;
+            referencedRelation: "company_stats";
+            referencedColumns: ["company_id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;

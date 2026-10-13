@@ -13,6 +13,7 @@ const entities: Record<string, string> = {
   profiles: "משתמש",
   app_settings: "הגדרה",
   categories: "קטגוריה",
+  featured_companies: "חברה בדף הבית",
 };
 
 const verbs: Record<string, string> = { insert: "יצירת", update: "עדכון", delete: "מחיקת" };

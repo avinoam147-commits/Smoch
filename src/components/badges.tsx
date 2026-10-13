@@ -43,3 +43,14 @@ export function ClaimedBadge({ claimed }: { claimed: boolean }) {
     </span>
   );
 }
+
+export function SponsoredBadge() {
+  return (
+    <span
+      title="החברה שילמה כדי להופיע כאן. התשלום לא משפיע על הדירוג או על הביקורות."
+      className="inline-flex shrink-0 items-center rounded-full border border-line px-2 py-0.5 text-xs font-medium text-muted"
+    >
+      ממומן
+    </span>
+  );
+}

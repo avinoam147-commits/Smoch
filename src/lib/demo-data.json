@@ -16,13 +16,7 @@
       "founded": 2019,
       "priceRange": "₪2,900–₪4,500",
       "claimed": true,
-      "distribution": [
-        9,
-        6,
-        14,
-        61,
-        112
-      ]
+      "distribution": [9, 6, 14, 61, 112]
     },
     {
       "id": "00000000-0000-4000-8000-000000000012",
@@ -40,13 +34,7 @@
       "founded": 2021,
       "priceRange": "₪6,000–₪9,000",
       "claimed": false,
-      "distribution": [
-        4,
-        2,
-        5,
-        22,
-        48
-      ]
+      "distribution": [4, 2, 5, 22, 48]
     },
     {
       "id": "00000000-0000-4000-8000-000000000013",
@@ -64,13 +52,7 @@
       "founded": 2023,
       "priceRange": "₪390 לחודש",
       "claimed": false,
-      "distribution": [
-        88,
-        21,
-        12,
-        9,
-        17
-      ]
+      "distribution": [88, 21, 12, 9, 17]
     },
     {
       "id": "00000000-0000-4000-8000-000000000014",
@@ -88,13 +70,7 @@
       "founded": 2016,
       "priceRange": "₪5,200",
       "claimed": true,
-      "distribution": [
-        14,
-        11,
-        27,
-        38,
-        30
-      ]
+      "distribution": [14, 11, 27, 38, 30]
     },
     {
       "id": "00000000-0000-4000-8000-000000000015",
@@ -112,13 +88,7 @@
       "founded": 2022,
       "priceRange": "₪250–₪600 לחודש",
       "claimed": false,
-      "distribution": [
-        19,
-        14,
-        16,
-        12,
-        9
-      ]
+      "distribution": [19, 14, 16, 12, 9]
     },
     {
       "id": "00000000-0000-4000-8000-000000000016",
@@ -136,13 +106,7 @@
       "founded": 2020,
       "priceRange": "₪14,900",
       "claimed": false,
-      "distribution": [
-        41,
-        12,
-        6,
-        5,
-        11
-      ]
+      "distribution": [41, 12, 6, 5, 11]
     }
   ],
   "reviews": [

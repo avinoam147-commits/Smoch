@@ -8,6 +8,7 @@ import {
   Flag,
   FolderTree,
   Gauge,
+  House,
   KeyRound,
   MessageSquareText,
   Receipt,
@@ -17,6 +18,7 @@ import {
 
 const items = [
   { href: "/admin", label: "סקירה", icon: Gauge, exact: true },
+  { href: "/admin/home", label: "דף הבית", icon: House },
   { href: "/admin/companies", label: "חברות", icon: Building2, badge: "companies" },
   { href: "/admin/reviews", label: "ביקורות", icon: MessageSquareText, badge: "reviews" },
   { href: "/admin/categories", label: "קטגוריות", icon: FolderTree },

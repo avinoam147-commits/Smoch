@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/env";
 import type { Database } from "./supabase/database.types";
-import type { Category, Company, CompanyStats, Review, ReviewWithCompany } from "./types";
+import type { Category, Company, CompanyStats, FeaturedCompany, Review, ReviewWithCompany } from "./types";
 import { demoCategories, demoCompanies, demoReviews, demoReviewsWithCompany } from "./demo-data";
 
 // Public reads. They run on every request (no server-side page cache), so a
@@ -163,4 +163,21 @@ export const getCategories = cache(async (): Promise<Category[]> => {
   const { data, error } = await supabase.from("categories").select("*").order("sort_order").order("label");
   if (error) throw error;
   return data.map((c) => ({ id: c.id, label: c.label, description: c.description, sortOrder: c.sort_order }));
+});
+
+/** Admin-picked home page companies that are live now, in the admin's order. */
+export const getFeaturedCompanies = cache(async (): Promise<FeaturedCompany[]> => {
+  await connection();
+  if (!isSupabaseConfigured) return [];
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("featured_companies")
+    .select("sponsored, companies!inner(*, categories(label))")
+    .eq("companies.status", "published")
+    .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
+    .order("position")
+    .order("created_at");
+  if (error) throw error;
+  const companies = await withStats(data.map((f) => f.companies));
+  return companies.map((c, i) => ({ ...c, sponsored: data[i].sponsored }));
 });

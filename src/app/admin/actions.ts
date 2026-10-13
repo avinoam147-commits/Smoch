@@ -419,3 +419,80 @@ export async function deleteCategory(id: string) {
   refresh();
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Home page: featured companies
+// ---------------------------------------------------------------------------
+
+const featuredSchema = z.object({
+  id: z.string().uuid().optional(),
+  companyId: z.string().uuid("בחרו חברה"),
+  sponsored: z.string().optional(),
+  endsAt: z.preprocess(blankToNull, z.string().date("תאריך לא תקין").nullable().default(null)),
+});
+
+export async function saveFeatured(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await adminClient();
+  const parsed = featuredSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  // The pick stays up through the whole chosen day (Israel time).
+  const row = { sponsored: v.sponsored === "on", ends_at: v.endsAt ? `${v.endsAt}T23:59:59+02:00` : null };
+  if (v.id) {
+    const { error } = await supabase.from("featured_companies").update(row).eq("id", v.id);
+    if (error) return { ok: false, message: friendlyError(error) };
+  } else {
+    const { data: last } = await supabase
+      .from("featured_companies")
+      .select("position")
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const { error } = await supabase
+      .from("featured_companies")
+      .insert({ ...row, company_id: v.companyId, position: (last?.position ?? 0) + 10 });
+    if (error) {
+      if (error.code === "23505") return { ok: false, fieldErrors: { companyId: "החברה כבר נמצאת ברשימה" } };
+      return { ok: false, message: friendlyError(error) };
+    }
+  }
+  refresh();
+  redirect("/admin/home?saved=1");
+}
+
+/** Swaps a pick with its neighbour and renumbers the list 10, 20, 30… */
+export async function moveFeatured(id: string, direction: -1 | 1) {
+  const { supabase } = await adminClient();
+  const { data, error } = await supabase.from("featured_companies").select("id").order("position").order("created_at");
+  if (error) return { ok: false, message: friendlyError(error) };
+  const ids = data.map((f) => f.id);
+  const i = ids.indexOf(id);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= ids.length) return { ok: true };
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  for (const [index, fid] of ids.entries()) {
+    const { error: e } = await supabase
+      .from("featured_companies")
+      .update({ position: (index + 1) * 10 })
+      .eq("id", fid);
+    if (e) return { ok: false, message: friendlyError(e) };
+  }
+  refresh();
+  return { ok: true };
+}
+
+export async function setFeaturedSponsored(id: string, sponsored: boolean) {
+  const { supabase } = await adminClient();
+  const { error } = await supabase.from("featured_companies").update({ sponsored }).eq("id", id);
+  if (error) return { ok: false, message: friendlyError(error) };
+  refresh();
+  return { ok: true };
+}
+
+export async function removeFeatured(id: string) {
+  const { supabase } = await adminClient();
+  const { error } = await supabase.from("featured_companies").delete().eq("id", id);
+  if (error) return { ok: false, message: friendlyError(error) };
+  refresh();
+  return { ok: true };
+}

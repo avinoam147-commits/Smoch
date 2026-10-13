@@ -371,6 +371,52 @@ await step("admin: categories can be added, used and shown only when they have c
   await pub.context().close();
 });
 
+await step("admin: home page picks are labelled sponsored, the label can be removed", async () => {
+  const p = await pageFor(admin);
+  for (const name of ["מסחר בגובה העיניים", "סיגנל-בוט פרו"]) {
+    await p.goto(`${BASE}/admin/home`);
+    await p.locator('select[name="companyId"]:visible').selectOption({ label: name });
+    await p.getByRole("button", { name: "הוספה לדף הבית" }).click();
+    await p.getByText("נשמר. השינוי כבר מופיע בדף הבית").waitFor();
+  }
+  const pub = await pageFor(null);
+  await pub.goto(BASE);
+  const section = pub.locator("section", { has: pub.getByRole("heading", { name: "חברות נבחרות" }) });
+  await section.getByText("מסחר בגובה העיניים").waitFor();
+  assert.equal(await section.getByText("ממומן", { exact: true }).count(), 2, "every pick starts as sponsored");
+  assert.equal(await section.getByText("2 דירוגים · ציון יוצג מ-10").count(), 1, "picks keep their real rating");
+
+  // Move the second pick up, then take its label off.
+  await p.goto(`${BASE}/admin/home`);
+  await p.getByRole("button", { name: "למעלה" }).click();
+  await p.locator("tbody tr").first().getByText("סיגנל-בוט פרו").waitFor();
+  await p.getByRole("button", { name: "ממומן · הורדה" }).first().click();
+  await p.getByRole("button", { name: "בלי תווית · הוספה" }).waitFor();
+  await shot(p, "17-admin-home");
+
+  await pub.reload();
+  const cards = section.locator("a");
+  await cards.first().getByText("סיגנל-בוט פרו").waitFor();
+  assert.equal(await cards.first().getByText("ממומן", { exact: true }).count(), 0, "label removed");
+  assert.equal(await cards.nth(1).getByText("ממומן", { exact: true }).count(), 1, "the other pick keeps its label");
+
+  // A pick whose end date has passed disappears from the home page.
+  await p.locator("tbody tr").first().getByRole("link", { name: "עריכה" }).click();
+  await p.getByRole("heading", { name: "עריכת ״סיגנל-בוט פרו״" }).waitFor();
+  await p.locator('input[name="endsAt"]:visible').fill("2020-01-01");
+  await p.getByRole("button", { name: "שמירה" }).click();
+  await p.getByText("התקופה הסתיימה").waitFor();
+  await pub.reload();
+  await section.getByText("מסחר בגובה העיניים").waitFor();
+  assert.equal(await section.getByText("סיגנל-בוט פרו").count(), 0, "expired pick is hidden");
+  await shot(pub, "18-home-featured");
+
+  await p.getByRole("button", { name: "הסרה" }).first().click();
+  await p.locator("tbody").getByText("סיגנל-בוט פרו").waitFor({ state: "detached" });
+  await p.context().close();
+  await pub.context().close();
+});
+
 await step("layout: a long word with no spaces can't widen the page", async () => {
   const eve = await makeUser("eve");
   const p = await pageFor(eve, { width: 390, height: 844 });
@@ -402,6 +448,7 @@ await step("mobile: no horizontal scroll on key pages", async () => {
     "/admin/reviews",
     "/admin/companies",
     "/admin/categories",
+    "/admin/home",
   ]) {
     await p.goto(`${BASE}${path}`);
     await p.waitForLoadState("networkidle");

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { BadgeCheck, MessageSquareReply, ShieldCheck } from "lucide-react";
 import { hasScore } from "@/lib/format";
-import { getCategories, getPublishedCompanies, getRecentReviews } from "@/lib/queries";
+import { getCategories, getFeaturedCompanies, getPublishedCompanies, getRecentReviews } from "@/lib/queries";
 import { SearchBox } from "@/components/search-box";
 import { CompanyCard } from "@/components/company-card";
 import { ReviewCard } from "@/components/review-card";
@@ -40,10 +40,11 @@ export default function Home() {
 
 /** Live data: rankings, the trust principles and the latest reviews. */
 async function HomeSections() {
-  const [companies, recent, categories] = await Promise.all([
+  const [companies, recent, categories, featured] = await Promise.all([
     getPublishedCompanies(),
     getRecentReviews(4),
     getCategories(),
+    getFeaturedCompanies(),
   ]);
   // Only categories that already have companies get a shortcut.
   const usedCategories = categories.filter((cat) => companies.some((c) => c.category === cat.id));
@@ -65,6 +66,17 @@ async function HomeSections() {
               >
                 {cat.label}
               </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {featured.length > 0 && (
+        <section className="mx-auto mt-14 max-w-6xl px-4">
+          <h2 className="mb-5 text-2xl font-bold tracking-tight">חברות נבחרות</h2>
+          <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((c) => (
+              <CompanyCard key={c.slug} company={c} sponsored={c.sponsored} />
             ))}
           </div>
         </section>

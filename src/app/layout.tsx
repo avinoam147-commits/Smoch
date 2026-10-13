@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import { Heebo } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -41,6 +43,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
+        {/* Cookieless page-view counts. Sends nothing until Analytics is enabled in Vercel. */}
+        <Suspense>
+          <Analytics />
+        </Suspense>
       </body>
     </html>
   );

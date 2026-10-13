@@ -19,6 +19,7 @@
 - כבר קרה פעם שהקוד עלה לפני ה-SQL והאתר הציג "משהו השתבש". לכן תמיד להזהיר מראש.
 
 **מה כבר רץ בפרודקשן:** `20261012000000_init.sql`, `20261013000000_quick_ratings.sql` (הגרסה הסופית), `20261014000000_categories.sql`.
+**ממתין להרצה (נשלח לבעלים):** `20261015000000_featured.sql` (חברות נבחרות בדף הבית). עד שירוץ, דף הבית ייכשל.
 
 ## לפני השקה: להזכיר לבעלים
 
@@ -62,6 +63,7 @@
 - **ביקורת שהצוות הוסיף** מסומנת בפומבי "הוזנה על ידי הצוות". זה מכוון, לשקיפות.
 - **דיווח** על ביקורת לא מסתיר אותה עד שמתקבלת החלטה. חברות לא יכולות לשלם כדי להסתיר ביקורות.
 - **קטגוריות** נמצאות בטבלה `categories` ומנוהלות מ-`/admin/categories`. באתר מוצגות רק קטגוריות שיש בהן חברות. "אחר" (`other`) מופיעה אחרונה.
+- **חברות נבחרות בדף הבית** (`featured_companies`, מנוהל מ-`/admin/home`): המנהל בוחר חברות וסדר. כל בחירה מסומנת "ממומן" כברירת מחדל, ואפשר להוריד את התווית רק כשהחברה לא שילמה (כך ביקש הבעלים). אפשר לקבוע תאריך סיום. הדירוג מוצג כמו שהוא ואי אפשר לשנות אותו. "הכי מומלצים" ו"הדירוג הנמוך ביותר" נשארים אוטומטיים ונפרדים.
 - **שם מוצג:** שם פרטי ואות ראשונה משם המשפחה (נגזר מחשבון Google, וניתן לעריכה בדף החשבון).
 - **נוסח דף הבית:** "לפני שמשלמים על שירות באינטרנט, שומעים מי שכבר שילם." עם שורת תחומים: מסחר · דרופשיפינג · שיווק דיגיטלי · ליווי וקורסים אונליין.
 
@@ -72,12 +74,13 @@
 - **Supabase:** `src/lib/supabase/{server,browser,public,service}.ts`. `public` הוא לקוח אנונימי לקריאה ציבורית. `service` (מפתח סודי) משמש רק לשליפת מיילים להתראות.
 - **מצב הדגמה:** בלי משתני Supabase האתר רץ עם נתונים בדויים מ-`src/lib/demo-data.{json,ts}`.
 - **אבטחה במסד הנתונים** (`supabase/migrations/`): RLS על כל הטבלאות, וטריגרים (`*_guard`) שאוכפים כללים גם מול מי שקורא ל-API ישירות: author, status ו-verified נקבעים בשרת; מגבלה יומית; חובת טלפון (הגדרה); מניעת קידום עצמי למנהל. `is_admin()` מחזיר true גם למפתח הסודי ול-SQL Editor. כל פעולת מנהל נרשמת אוטומטית ב-`admin_audit`.
-- **טבלאות:** `profiles`, `companies`, `categories`, `reviews`, `review_replies`, `review_votes`, `reports`, `receipts` (באקט פרטי `receipts`, הקובץ נמחק אחרי ההחלטה), `company_claims`, `company_members`, `app_settings`, `admin_audit`, והתצוגה `company_stats`.
+- **טבלאות:** `profiles`, `companies`, `categories`, `featured_companies`, `reviews`, `review_replies`, `review_votes`, `reports`, `receipts` (באקט פרטי `receipts`, הקובץ נמחק אחרי ההחלטה), `company_claims`, `company_members`, `app_settings`, `admin_audit`, והתצוגה `company_stats`.
 - **דפים:**
   - ציבוריים: `/`, `/companies`, `/company/[slug]`, `/company/[slug]/review`, `/company/[slug]/claim`, `/add-company`, `/account`, `/login`, `/auth/callback`, `/api/viewer` (מצב אישי של המשתמש בדף חברה), `/guidelines`, `/terms`, `/privacy`, `sitemap.xml`, `robots.txt`.
-  - פאנל ניהול `/admin` (מחזיר 404 למי שאינו מנהל): סקירה, חברות, ביקורות, קטגוריות, דיווחים, קבלות, בקשות ניהול, משתמשים, הגדרות, יומן פעולות.
+  - פאנל ניהול `/admin` (מחזיר 404 למי שאינו מנהל): סקירה, דף הבית, חברות, ביקורות, קטגוריות, דיווחים, קבלות, בקשות ניהול, משתמשים, הגדרות, יומן פעולות.
 - **Server actions:** `src/app/actions/*.ts` (ציבוריים) ו-`src/app/admin/actions.ts`. אימות קלט עם zod. שגיאות מסד מתורגמות לעברית ב-`src/lib/errors.ts`.
 - **מיילים:** `src/lib/notify.ts` דרך Resend. כרגע מדלג בשקט, כי עוד אין `RESEND_API_KEY`.
+- **סטטיסטיקת כניסות:** Vercel Web Analytics (`<Analytics />` ב-`layout.tsx`, בלי עוגיות). הבעלים צריך להפעיל ב-Vercel: Analytics, Enable.
 - **רשם החברות:** `src/lib/registry.ts` (data.gov.il). **לא נבדק מול השירות האמיתי**, כי הדומיין חסום בסביבת הפיתוח.
 
 ## עיצוב
@@ -98,9 +101,9 @@ SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io npx supabase start -x edge-runtime,lo
 npm run db:reset          # migrations + seed (נתוני דמה לפיתוח בלבד)
 npm run db:types          # אחרי שינוי סכמה, ואז prettier על הקובץ
 npm run typecheck && npm run lint
-npm run test:db           # 18 בדיקות של חוקי המסד
+npm run test:db           # 19 בדיקות של חוקי המסד
 npm run build && npx next start -p 3000   # ברקע (run_in_background)
-npm run test:e2e          # 15 תרחישים ב-Playwright; אפשר להעביר תיקייה לצילומי מסך
+npm run test:e2e          # 16 תרחישים ב-Playwright; אפשר להעביר תיקייה לצילומי מסך
 ```
 
 **מלכודות שכבר נתקלנו בהן:**

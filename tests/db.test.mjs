@@ -481,3 +481,26 @@ test("delete_my_account removes the user and their reviews", async () => {
   const { data: u } = await service.auth.admin.getUserById(frank.id);
   assert.equal(u.user, null);
 });
+
+test("only admins can pick home page companies; everyone can read the picks", async () => {
+  const company = await newCompany();
+  const denied = await alice.client.from("featured_companies").insert({ company_id: company.id });
+  assert.ok(denied.error, "a regular user must not feature a company");
+  const { data, error } = await admin.client
+    .from("featured_companies")
+    .insert({ company_id: company.id })
+    .select()
+    .single();
+  assert.ifError(error);
+  assert.equal(data.sponsored, true, "picks are labelled sponsored by default");
+  const { data: seen } = await anon.from("featured_companies").select("id").eq("id", data.id);
+  assert.equal(seen.length, 1);
+  const { data: audit } = await service
+    .from("admin_audit")
+    .select("id")
+    .eq("entity", "featured_companies")
+    .eq("entity_id", data.id);
+  assert.equal(audit.length, 1, "the pick is in the audit log");
+  const tamper = await alice.client.from("featured_companies").update({ sponsored: false }).eq("id", data.id).select();
+  assert.equal(tamper.data?.length ?? 0, 0, "a regular user must not remove the label");
+});
