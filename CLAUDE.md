@@ -1,22 +1,129 @@
-# Smoch (סמוך)
+# סמוך (Smoch): הקשר מלא להמשך עבודה
 
-Hebrew RTL review site (Next.js 16 + Supabase). Talk to the owner in Hebrew.
+הקובץ הזה נקרא אוטומטית בתחילת כל שיחה. הוא מסכם את כל מה שנעשה עד עכשיו, איך עובדים עם הבעלים, ומה הצעד הבא, כדי שאפשר יהיה להמשיך בדיוק מאותה נקודה גם אחרי ניקוי השיחה.
 
-## Before launch: remind the owner
+## עם מי עובדים ואיך
 
-When the owner talks about launching, moving to a new domain, or inviting
-users, go through `LAUNCH_CHECKLIST.md` with them first. They asked to be
-reminded in particular to:
+- **הבעלים:** אבינועם (avinoam147@gmail.com). **תמיד לדבר איתו בעברית**, כולל משפטי פתיחה. הוא העיר על זה כמה פעמים.
+- עובד בעיקר **מהטלפון** ושולח צילומי מסך. ההוראות צריכות להיות קצרות, ממוספרות, **שלב אחרי שלב**, עם שמות הכפתורים המדויקים באנגלית כמו שהם מופיעים בממשק.
+- רוצה **דעה ביקורתית** על כל החלטה: לפני שמבצעים, להגיד מה חושבים ואת הסיכונים.
+- **כשלא ברור מה הוא מבקש, לשאול.** הוא ביקש את זה במפורש.
+- שינויים קטנים וברורים: לבצע ישר. החלטות מוצר: להציג המלצה אחת ולשאול.
+- אחרי כל שינוי: לבדוק (build, בדיקות, צילומי מסך), לעשות commit, ולדחוף ל-`ccr-c5c59433-dwg50k` (זה גם ה-branch הראשי ב-GitHub, ו-Vercel פורס ממנו אוטומטית).
 
-1. Open an email address on the new domain (and use it in the legal pages,
-   Google OAuth branding and as the email sender).
-2. Test phone (SMS) verification end to end before launch.
+## ⚠️ שינויים במסד הנתונים
 
-## Database changes
+ה-migrations **לא** רצים אוטומטית בפרודקשן. הבעלים מריץ אותם ידנית ב-Supabase SQL Editor.
+- כל שינוי שמוסיף קובץ ב-`supabase/migrations/`: **לכתוב את זה בשורה הראשונה של ההודעה**, עם קישור לקובץ בגיטהאב (`https://github.com/avinoam147-commits/Smoch/blob/ccr-c5c59433-dwg50k/supabase/migrations/<file>`) והוראות: Copy raw file, SQL Editor, New query, Run.
+- כל migration חייב להיות **בטוח להרצה חוזרת** (`if exists`, `if not exists`, `on conflict`, `drop ... if exists`) ולרוץ בתוך `begin; ... commit;`.
+- כבר קרה פעם שהקוד עלה לפני ה-SQL והאתר הציג "משהו השתבש". לכן תמיד להזהיר מראש.
 
-Production migrations are run by hand in the Supabase SQL Editor. When a
-change adds a file under `supabase/migrations/`, say so at the very top of
-the message, before anything else, and ask the owner to run it before
-(or right after) the deploy. Keep migrations safe to run more than once.
+**מה כבר רץ בפרודקשן:** `20261012000000_init.sql`, `20261013000000_quick_ratings.sql` (הגרסה הסופית), `20261014000000_categories.sql`.
 
-See `AGENTS.md` for Next.js version notes and `SETUP.md` for the setup guide.
+## לפני השקה: להזכיר לבעלים
+
+כשמדברים על השקה, דומיין חדש או הזמנת משתמשים, לעבור איתו על `LAUNCH_CHECKLIST.md`. הוא ביקש במיוחד שנזכיר לו:
+1. לפתוח **אימייל בדומיין החדש**, ולהשתמש בו בדפים המשפטיים, במסך ההתחברות של Google וככתובת השולח של המיילים.
+2. **לבדוק אימות טלפון (SMS) מקצה לקצה** לפני ההשקה.
+
+## מה המוצר
+
+אתר ביקורות ציבורי בעברית, בסגנון Trustpilot ישראלי, על שירותים וקורסים באינטרנט: מסחר, דרופשיפינג, שיווק דיגיטלי, ליווי ועוד. התחיל ממוקד בקורסי מסחר, ועכשיו מתרחב בעזרת קטגוריות שמנוהלות מהפאנל.
+
+## תשתית חיה
+
+| מה | פרטים |
+| --- | --- |
+| אתר | https://smoch-web.vercel.app (פרויקט Vercel בשם `smoch-web`) |
+| ריפו | `avinoam147-commits/Smoch`, branch `ccr-c5c59433-dwg50k` |
+| Supabase | project ref `uksvpmspwyotnbczyzqv` (אזור Frankfurt) |
+| התחברות | Google OAuth דרך Supabase. לקוח `smoch-web` ב-Google Cloud, בפרויקט `smoch` |
+| משתני Vercel | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_SITE_URL=https://smoch-web.vercel.app` |
+| מנהל | הבעלים הוגדר `role='admin'` דרך SQL |
+
+**מה עוד לא הוגדר:** דומיין, אימייל, Resend (מיילים), Twilio (SMS), Google Search Console. אסור לבקש מהבעלים לשלוח מפתחות סודיים בצ'אט.
+
+## סטטוס ההקמה
+
+- ✅ Supabase: הפרויקט נפתח, 3 ה-migrations רצו.
+- ✅ Google OAuth: הלקוח נוצר וחובר ל-Supabase. ב-Branding מוגדרים: דף הבית, `/privacy`, `/terms`, ו-Authorized domains `uksvpmspwyotnbczyzqv.supabase.co` + `smoch-web.vercel.app`. האפליקציה פורסמה (Publish app).
+- ✅ Vercel: פרוס, משתני סביבה מוגדרים, Site URL ו-Redirect URL (`/auth/callback`) מוגדרים ב-Supabase.
+- ✅ הבעלים התחבר ונכנס לפאנל הניהול.
+- ⏳ **ממתין:** חבר של הבעלים צריך לנסות להתחבר עם Gmail משלו, כדי לוודא שההתחברות פתוחה לכולם.
+- 💡 הוצע לבעלים להוסיף מהפאנל קטגוריה "דרופשיפינג ומסחר אונליין" (מזהה `dropshipping`, סדר `45`). לא ידוע אם הוסיף.
+
+## החלטות מוצר (לא לשנות בלי לשאול)
+
+- **ביקורת:** כוכבים + טקסט **חובה**, מינימום **10 תווים** (`MIN_REVIEW_LENGTH`), מקסימום 5000, **בלי כותרת**. ביקורת אחת לאדם לכל חברה, ואפשר לערוך אותה.
+- **הציון מוסתר עד 10 דירוגים** (`MIN_RATINGS_FOR_SCORE`). עד אז מוסתרות גם ההתפלגות וה-JSON-LD, ובדף החברה מופיע הסבר שקוף למה הציון מוסתר, עם פס התקדמות "X מתוך 10".
+- **ציון אמינות:** ממוצע בייסיאני (prior של 10 דירוגים של 3 כוכבים). רכישה מאומתת שווה פי 1.5. דירוג מלפני יותר משנה שווה 0.75, ומלפני יותר משנתיים 0.5. ליד הציון מוצג גם הממוצע הגולמי.
+- **מודרציה אוטומטית:** טלפון, מייל, קישור או האשמה חמורה ("נוכלים", "הונאה" וכדומה) גורמים לביקורת להמתין לאישור ידני. הלוגיקה נמצאת ב-SQL (`moderation_reason`) ומשוכפלת ב-`src/lib/moderation.ts` כדי להציג אזהרה מוקדמת.
+- **ביקורת שהצוות הוסיף** מסומנת בפומבי "הוזנה על ידי הצוות". זה מכוון, לשקיפות.
+- **דיווח** על ביקורת לא מסתיר אותה עד שמתקבלת החלטה. חברות לא יכולות לשלם כדי להסתיר ביקורות.
+- **קטגוריות** נמצאות בטבלה `categories` ומנוהלות מ-`/admin/categories`. באתר מוצגות רק קטגוריות שיש בהן חברות. "אחר" (`other`) מופיעה אחרונה.
+- **שם מוצג:** שם פרטי ואות ראשונה משם המשפחה (נגזר מחשבון Google, וניתן לעריכה בדף החשבון).
+- **נוסח דף הבית:** "לפני שמשלמים על שירות באינטרנט, שומעים מי שכבר שילם." עם שורת תחומים: מסחר · דרופשיפינג · שיווק דיגיטלי · ליווי וקורסים אונליין.
+
+## ארכיטקטורה
+
+- **Next.js 16** עם `cacheComponents: true`. זו **לא** הגרסה שאתה מכיר: לקרוא את `AGENTS.md` ואת התיעוד ב-`node_modules/next/dist/docs/` לפני שכותבים קוד. `middleware` נקרא עכשיו `proxy` (`src/proxy.ts`). גישה ל-cookies ולנתונים לא שמורים במטמון חייבת להיות בתוך `<Suspense>`.
+- **אין מטמון דפים לנתונים.** כל השאילתות ב-`src/lib/queries.ts` רצות בכל בקשה (`await connection()` עם `React.cache` למניעת כפילויות). זה הוחלט אחרי שבדיקות הראו דפים לא מעודכנים אחרי כתיבה עם `use cache` ו-ISR. **לא להחזיר `use cache` לנתוני ביקורות או חברות.**
+- **Supabase:** `src/lib/supabase/{server,browser,public,service}.ts`. `public` הוא לקוח אנונימי לקריאה ציבורית. `service` (מפתח סודי) משמש רק לשליפת מיילים להתראות.
+- **מצב הדגמה:** בלי משתני Supabase האתר רץ עם נתונים בדויים מ-`src/lib/demo-data.{json,ts}`.
+- **אבטחה במסד הנתונים** (`supabase/migrations/`): RLS על כל הטבלאות, וטריגרים (`*_guard`) שאוכפים כללים גם מול מי שקורא ל-API ישירות: author, status ו-verified נקבעים בשרת; מגבלה יומית; חובת טלפון (הגדרה); מניעת קידום עצמי למנהל. `is_admin()` מחזיר true גם למפתח הסודי ול-SQL Editor. כל פעולת מנהל נרשמת אוטומטית ב-`admin_audit`.
+- **טבלאות:** `profiles`, `companies`, `categories`, `reviews`, `review_replies`, `review_votes`, `reports`, `receipts` (באקט פרטי `receipts`, הקובץ נמחק אחרי ההחלטה), `company_claims`, `company_members`, `app_settings`, `admin_audit`, והתצוגה `company_stats`.
+- **דפים:**
+  - ציבוריים: `/`, `/companies`, `/company/[slug]`, `/company/[slug]/review`, `/company/[slug]/claim`, `/add-company`, `/account`, `/login`, `/auth/callback`, `/api/viewer` (מצב אישי של המשתמש בדף חברה), `/guidelines`, `/terms`, `/privacy`, `sitemap.xml`, `robots.txt`.
+  - פאנל ניהול `/admin` (מחזיר 404 למי שאינו מנהל): סקירה, חברות, ביקורות, קטגוריות, דיווחים, קבלות, בקשות ניהול, משתמשים, הגדרות, יומן פעולות.
+- **Server actions:** `src/app/actions/*.ts` (ציבוריים) ו-`src/app/admin/actions.ts`. אימות קלט עם zod. שגיאות מסד מתורגמות לעברית ב-`src/lib/errors.ts`.
+- **מיילים:** `src/lib/notify.ts` דרך Resend. כרגע מדלג בשקט, כי עוד אין `RESEND_API_KEY`.
+- **רשם החברות:** `src/lib/registry.ts` (data.gov.il). **לא נבדק מול השירות האמיתי**, כי הדומיין חסום בסביבת הפיתוח.
+
+## עיצוב
+
+מבוסס על הסקיל `emil-design-eng`. ההנחיות:
+- נקי, עברית מימין לשמאל, מובייל קודם, פונט Heebo, צבע מבטא ירוק-כהה (`--accent`), מצב כהה.
+- טוקנים של צבעים ב-`globals.css`.
+- אנימציות קצרות (מתחת ל-300ms) עם `--ease-out`. לחיצה על כפתור מקטינה אותו ל-0.97 (`.pressable`). רשימות נכנסות בהדרגה (`.stagger`). הודעות חדשות מופיעות עם `.appear`. יש תמיכה ב-`prefers-reduced-motion`.
+- טקסט שמשתמשים כותבים מקבל `wrap-anywhere`, כדי שמילה ארוכה לא תרחיב את הדף.
+- לשמור על הקו הזה בכל דף חדש.
+
+## איך בודקים (בסביבה הזו)
+
+```bash
+# Docker לא תמיד רץ אחרי ריסטארט:
+(dockerd > /tmp/dockerd.log 2>&1 &)
+SUPABASE_INTERNAL_IMAGE_REGISTRY=docker.io npx supabase start -x edge-runtime,logflare,vector,imgproxy,supavisor,realtime
+npm run db:reset          # migrations + seed (נתוני דמה לפיתוח בלבד)
+npm run db:types          # אחרי שינוי סכמה, ואז prettier על הקובץ
+npm run typecheck && npm run lint
+npm run test:db           # 18 בדיקות של חוקי המסד
+npm run build && npx next start -p 3000   # ברקע (run_in_background)
+npm run test:e2e          # 15 תרחישים ב-Playwright; אפשר להעביר תיקייה לצילומי מסך
+```
+
+**מלכודות שכבר נתקלנו בהן:**
+- `.env.local` (לא בגיט) מכוון ל-Supabase המקומי. מפתחות מקומיים **לא נכנסים לקוד**: GitHub חסם push בגלל `sb_secret_`. הבדיקות קוראות אותם בזמן ריצה מ-`tests/local-env.mjs`.
+- **לא להשתמש ב-`pkill -f`** עם תבנית שמופיעה בפקודה עצמה, כי זה הורג את ה-shell. לעצור שרתים עם TaskStop.
+- להריץ את ה-e2e על מסד נקי (`db reset`) ועם שרת שהופעל מחדש. אחרת נתונים מהריצה הקודמת מפילים בדיקות.
+- Next 16 משאיר דפים קודמים מוסתרים בתוך ה-DOM, ולכן בבדיקות משתמשים ב-`:visible` או ב-`.filter({ visible: true })`.
+- בסביבה הזו אין גישה ל-`*.vercel.app` ול-`data.gov.il`. את האתר החי בודק הבעלים, שמדווח בצילומי מסך.
+
+## Commits
+
+הודעות commit באנגלית, עם תיאור קצר ומה ולמה. בסוף כל הודעה:
+```
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LanyrgemGQBSvQWWkfQtHP
+```
+לא לפתוח PR בלי בקשה מפורשת.
+
+## הצעדים הבאים
+
+1. לשמוע מהבעלים אם החבר הצליח להתחבר. אם לא, לבדוק ב-Google Auth Platform, ב-Audience, שהסטטוס הוא In production.
+2. להמשיך בשינויים שהבעלים יבקש.
+3. לקראת השקה: לעבור על `LAUNCH_CHECKLIST.md`, בעיקר אימייל בדומיין, Twilio, עורך דין ו-Search Console.
+
+רעיונות שעלו ולא בוצעו: דומיין `.co.il` (הומלץ לבדוק גם איך אנשים כותבים את השם "Smoch"), התראות במייל דרך Resend, וחובת אימות טלפון.
+
+ראו גם `AGENTS.md` (הערות על גרסת Next.js), `SETUP.md` (מדריך ההקמה) ו-`README.md`.
