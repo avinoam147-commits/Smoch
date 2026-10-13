@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { categories, categoryIds, hasScore, isCategory } from "@/lib/format";
-import type { Company } from "@/lib/types";
+import { hasScore } from "@/lib/format";
+import type { Category, Company } from "@/lib/types";
 import { CompanyCard } from "@/components/company-card";
 import { SearchBox } from "@/components/search-box";
 
@@ -15,14 +15,16 @@ const sortLabels: Record<Sort, string> = {
   reviews: "הכי הרבה ביקורות",
 };
 
-export function CompaniesBrowser({ companies }: { companies: Company[] }) {
+export function CompaniesBrowser({ companies, categories }: { companies: Company[]; categories: Category[] }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const q = params.get("q")?.trim() ?? "";
   const rawCategory = params.get("category");
-  const category = isCategory(rawCategory) ? rawCategory : null;
+  const category = categories.some((c) => c.id === rawCategory) ? rawCategory : null;
+  // Only categories that already have companies are offered as filters.
+  const usedCategories = categories.filter((cat) => companies.some((c) => c.category === cat.id));
   const rawSort = params.get("sort");
   const sort: Sort = rawSort === "low" || rawSort === "reviews" ? rawSort : "top";
   const needle = q.toLowerCase();
@@ -56,14 +58,14 @@ export function CompaniesBrowser({ companies }: { companies: Company[] }) {
         <SearchBox key={q} defaultValue={q} />
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 space-y-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="סינון לפי קטגוריה">
           <Chip active={!category} onClick={() => setParam("category", null)}>
             הכל
           </Chip>
-          {categoryIds.map((id) => (
-            <Chip key={id} active={category === id} onClick={() => setParam("category", id)}>
-              {categories[id].label}
+          {usedCategories.map((cat) => (
+            <Chip key={cat.id} active={category === cat.id} onClick={() => setParam("category", cat.id)}>
+              {cat.label}
             </Chip>
           ))}
         </div>

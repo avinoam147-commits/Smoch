@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useState, useTransition } from "react";
 import { slugify } from "@/lib/slug";
-import { categories, categoryIds } from "@/lib/format";
+import type { Category } from "@/lib/types";
 import type { ActionState } from "@/lib/types";
 import { saveCompany, verifyRegistry } from "../actions";
 import { Field, inputClass } from "../_components/field";
@@ -25,7 +25,7 @@ export type CompanyFormValues = {
   adminNote: string;
 };
 
-export function CompanyEditor({ initial }: { initial: CompanyFormValues }) {
+export function CompanyEditor({ initial, categories }: { initial: CompanyFormValues; categories: Category[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveCompany, null);
   const [name, setName] = useState(initial.name);
   const [slug, setSlug] = useState(initial.slug);
@@ -75,9 +75,9 @@ export function CompanyEditor({ initial }: { initial: CompanyFormValues }) {
           </Field>
           <Field label="קטגוריה" required>
             <select name="category" defaultValue={initial.category} className={inputClass}>
-              {categoryIds.map((id) => (
-                <option key={id} value={id}>
-                  {categories[id].label}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.label}
                 </option>
               ))}
             </select>

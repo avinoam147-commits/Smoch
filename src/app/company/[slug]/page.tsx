@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CalendarDays, ExternalLink, Hash, MapPin, PenLine, Wallet, AtSign } from "lucide-react";
-import { categories, displayHost, externalHref, hasScore, MIN_RATINGS_FOR_SCORE, scoreTone } from "@/lib/format";
+import { displayHost, externalHref, hasScore, MIN_RATINGS_FOR_SCORE, scoreTone } from "@/lib/format";
 import { getCompanyBySlug, getCompanyReviews } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { siteUrl } from "@/lib/site";
@@ -55,7 +55,7 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
           </Link>
           <span className="mx-2">/</span>
           <Link href={`/companies?category=${company.category}`} className="hover:text-ink">
-            {categories[company.category].label}
+            {company.categoryLabel}
           </Link>
         </nav>
 
@@ -64,8 +64,8 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
             <div className="flex min-w-0 gap-4">
               <CompanyMark name={company.name} logoUrl={company.logoUrl} size="lg" />
               <div className="min-w-0">
-                <h1 className="text-3xl font-extrabold tracking-tight text-balance break-words">{company.name}</h1>
-                {company.tagline && <p className="mt-1 text-muted">{company.tagline}</p>}
+                <h1 className="text-3xl font-extrabold tracking-tight text-balance wrap-anywhere">{company.name}</h1>
+                {company.tagline && <p className="mt-1 wrap-anywhere text-muted">{company.tagline}</p>}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <RegistryBadge verified={company.registryVerified} />
                   <ClaimedBadge claimed={company.claimed} />
@@ -127,7 +127,9 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
             <div className="rounded-2xl border border-line bg-surface p-5">
               <h2 className="font-semibold">על החברה</h2>
               {company.about && (
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted">{company.about}</p>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed wrap-anywhere text-muted">
+                  {company.about}
+                </p>
               )}
               <dl className="mt-4 space-y-3 text-sm">
                 {company.registryId && (

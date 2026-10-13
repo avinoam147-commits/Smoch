@@ -5,8 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getViewer } from "@/lib/auth";
 import { friendlyError } from "@/lib/errors";
 import { slugFromWebsite, slugify } from "@/lib/slug";
-import { categoryIds } from "@/lib/format";
-import type { CategoryId } from "@/lib/types";
 
 const optionalUrl = z
   .string()
@@ -17,7 +15,7 @@ const optionalUrl = z
 
 const suggestSchema = z.object({
   name: z.string().trim().min(2, "כתבו את שם החברה").max(120),
-  category: z.enum(categoryIds as [CategoryId, ...CategoryId[]]),
+  category: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "בחרו קטגוריה"),
   website: optionalUrl,
   registryId: z
     .string()

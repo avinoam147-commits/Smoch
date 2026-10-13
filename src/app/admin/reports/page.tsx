@@ -59,7 +59,7 @@ export default async function AdminReports({ searchParams }: PageProps<"/admin/r
                     </span>
                     <StatusChip status={rep.reviews.status} />
                   </div>
-                  <p className="mt-2 line-clamp-4 whitespace-pre-line text-ink/80">{rep.reviews.body}</p>
+                  <p className="mt-2 line-clamp-4 whitespace-pre-line wrap-anywhere text-ink/80">{rep.reviews.body}</p>
                 </div>
               )}
               {rep.resolution_note && <p className="mt-2 text-xs text-muted">החלטה: {rep.resolution_note}</p>}

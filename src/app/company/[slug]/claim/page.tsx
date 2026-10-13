@@ -30,7 +30,9 @@ async function Gate({ params }: { params: PageProps<"/company/[slug]/claim">["pa
       <Link href={`/company/${company.slug}`} className="text-sm text-muted hover:text-ink">
         → חזרה ל{company.name}
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-balance">ניהול הדף של {company.name}</h1>
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-balance wrap-anywhere">
+        ניהול הדף של {company.name}
+      </h1>
       <p className="mt-2 text-pretty text-muted">
         נציג/ה מאומת/ת של החברה יכול/ה להגיב לביקורות בפומבי ולקבל התראה על ביקורות חדשות. ההצטרפות חינמית ולא משפיעה על
         הציון. אי אפשר להסיר או להסתיר ביקורות.

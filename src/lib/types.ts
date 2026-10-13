@@ -1,4 +1,9 @@
-export type CategoryId = "courses" | "signals" | "mentoring" | "algo";
+export type Category = {
+  id: string;
+  label: string;
+  description: string;
+  sortOrder: number;
+};
 
 export type CompanyStats = {
   reviewCount: number;
@@ -12,7 +17,8 @@ export type Company = {
   id: string;
   slug: string;
   name: string;
-  category: CategoryId;
+  category: string;
+  categoryLabel: string;
   tagline: string;
   about: string;
   website: string | null;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getViewer } from "@/lib/auth";
+import { getCategories } from "@/lib/queries";
 import { GoogleButton } from "@/components/google-button";
 import { AddCompanyForm } from "./add-company-form";
 
@@ -11,8 +12,8 @@ export default function AddCompanyPage() {
     <div className="mx-auto max-w-2xl px-4 pt-10">
       <h1 className="text-3xl font-extrabold tracking-tight">הוספת חברה</h1>
       <p className="mt-2 text-pretty text-muted">
-        לא מצאתם קורס, מנטור או קבוצת איתותים? הוסיפו אותם. כל חברה חדשה עוברת בדיקה כדי למנוע כפילויות, ואם יש לה ח.פ.
-        נאמת את הפרטים מול רשם החברות.
+        לא מצאתם את החברה או השירות? הוסיפו אותם. כל חברה חדשה עוברת בדיקה כדי למנוע כפילויות, ואם יש לה ח.פ. נאמת את
+        הפרטים מול רשם החברות.
       </p>
       <Suspense fallback={<div className="mt-8 h-96 animate-pulse rounded-2xl bg-surface-2" />}>
         <Gate />
@@ -33,5 +34,6 @@ async function Gate() {
       </div>
     );
   }
-  return <AddCompanyForm />;
+  const categories = await getCategories();
+  return <AddCompanyForm categories={categories} />;
 }

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { categories, formatDate } from "@/lib/format";
-import type { CategoryId } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 import { StatusChip } from "@/components/status-chip";
 import { ActionButton } from "../_components/action-button";
 import { Empty, FilterTabs, Flash, PageHeader, SearchForm, Table } from "../_components/ui";
@@ -16,14 +15,16 @@ export default async function AdminCompanies({ searchParams }: PageProps<"/admin
   const sp = await searchParams;
   const status = typeof sp.status === "string" && (statuses as readonly string[]).includes(sp.status) ? sp.status : "";
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
+  const category = typeof sp.category === "string" ? sp.category : "";
 
   const supabase = await createClient();
   let query = supabase
     .from("companies")
-    .select("id, name, slug, category, status, registry_id, registry_verified, claimed, created_at")
+    .select("id, name, slug, category, status, registry_id, registry_verified, claimed, created_at, categories(label)")
     .order("created_at", { ascending: false })
     .limit(300);
   if (status) query = query.eq("status", status as (typeof statuses)[number]);
+  if (category) query = query.eq("category", category);
   if (q)
     query = query.or(
       `name.ilike.%${q.replace(/[%,()]/g, "")}%,slug.ilike.%${q.replace(/[%,()]/g, "")}%,registry_id.ilike.%${q.replace(/[%,()]/g, "")}%`,
@@ -76,7 +77,7 @@ export default async function AdminCompanies({ searchParams }: PageProps<"/admin
                   {c.registry_id && ` · ${c.registry_id}${c.registry_verified ? " ✓" : ""}`}
                 </p>
               </td>
-              <td className="px-4 py-3 text-muted">{categories[c.category as CategoryId]?.label}</td>
+              <td className="px-4 py-3 text-muted">{c.categories?.label ?? c.category}</td>
               <td className="px-4 py-3 tabular-nums">{counts.get(c.id) ?? 0}</td>
               <td className="px-4 py-3">
                 <StatusChip status={c.status} />

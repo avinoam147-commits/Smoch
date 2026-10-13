@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCategories } from "@/lib/queries";
 import { formatDate } from "@/lib/format";
 import { StatusChip } from "@/components/status-chip";
 import { CompanyEditor } from "../company-editor";
@@ -16,7 +17,7 @@ export default async function EditCompanyPage({ params, searchParams }: PageProp
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
-  const [{ data: c }, { data: stats }, { data: members }, { data: claims }] = await Promise.all([
+  const [{ data: c }, { data: stats }, { data: members }, { data: claims }, categories] = await Promise.all([
     supabase.from("companies").select("*").eq("id", id).maybeSingle(),
     supabase.from("company_stats").select("*").eq("company_id", id).maybeSingle(),
     supabase.from("company_members").select("user_id, created_at").eq("company_id", id),
@@ -25,6 +26,7 @@ export default async function EditCompanyPage({ params, searchParams }: PageProp
       .select("id, full_name, status, created_at")
       .eq("company_id", id)
       .order("created_at", { ascending: false }),
+    getCategories(),
   ]);
   if (!c) notFound();
   const memberIds = (members ?? []).map((m) => m.user_id);
@@ -96,6 +98,7 @@ export default async function EditCompanyPage({ params, searchParams }: PageProp
       </Panel>
 
       <CompanyEditor
+        categories={categories}
         initial={{
           id: c.id,
           name: c.name,

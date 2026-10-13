@@ -1,9 +1,27 @@
 // Sample content shown while Supabase isn't configured ("demo mode").
 // Every company, person and review here is fictional.
 import raw from "./demo-data.json";
-import type { CategoryId, Company, Review, ReviewWithCompany } from "./types";
+import type { Category, Company, Review, ReviewWithCompany } from "./types";
 
 type RawCompany = (typeof raw.companies)[number];
+
+// Same list the categories migration inserts.
+export const demoCategories: Category[] = [
+  ["courses", "קורסי מסחר"],
+  ["signals", "קבוצות איתותים"],
+  ["mentoring", "ליווי אישי למסחר"],
+  ["algo", "בוטים ואלגו-טריידינג"],
+  ["brokers", "ברוקרים ופלטפורמות מסחר"],
+  ["investments", "ייעוץ והשקעות"],
+  ["real-estate", "נדל״ן והשקעות נדל״ן"],
+  ["education", "קורסים והכשרות מקצועיות"],
+  ["business-coaching", "ייעוץ עסקי ואימון"],
+  ["digital-marketing", "שיווק דיגיטלי"],
+  ["online-shops", "חנויות אונליין"],
+  ["tech-services", "בניית אתרים ותוכנה"],
+  ["home-services", "שירותי בית ושיפוצים"],
+  ["other", "אחר"],
+].map(([id, label], i) => ({ id, label, description: "", sortOrder: id === "other" ? 1000 : (i + 1) * 10 }));
 
 function stats(d: number[]) {
   const n = d.reduce((a, b) => a + b, 0);
@@ -17,7 +35,8 @@ function stats(d: number[]) {
 }
 
 function toCompany({ distribution, ...c }: RawCompany): Company {
-  return { ...c, category: c.category as CategoryId, stats: stats(distribution) };
+  const label = demoCategories.find((x) => x.id === c.category)?.label ?? c.category;
+  return { ...c, categoryLabel: label, stats: stats(distribution) };
 }
 
 export const demoCompanies: Company[] = raw.companies.map(toCompany);

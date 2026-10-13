@@ -5,9 +5,9 @@ import Link from "next/link";
 import { CheckCircle2, Search } from "lucide-react";
 import { suggestCompany, type SuggestResult } from "@/app/actions/companies";
 import { lookupRegistryAction } from "@/app/actions/registry";
-import { categories, categoryIds } from "@/lib/format";
+import type { Category } from "@/lib/types";
 
-export function AddCompanyForm() {
+export function AddCompanyForm({ categories }: { categories: Category[] }) {
   const [result, formAction, pending] = useActionState<SuggestResult | null, FormData>(suggestCompany, null);
   const [name, setName] = useState("");
   const [registryId, setRegistryId] = useState("");
@@ -106,12 +106,12 @@ export function AddCompanyForm() {
         <select
           id="category"
           name="category"
-          defaultValue="courses"
+          defaultValue={categories[0]?.id}
           className="mt-2.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base"
         >
-          {categoryIds.map((id) => (
-            <option key={id} value={id}>
-              {categories[id].label}
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.label}
             </option>
           ))}
         </select>

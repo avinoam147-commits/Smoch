@@ -15,7 +15,10 @@ export function ReviewCard({
   showCompany?: boolean;
 }) {
   return (
-    <article id={`review-${review.id}`} className="scroll-mt-24 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+    <article
+      id={`review-${review.id}`}
+      className="min-w-0 scroll-mt-24 rounded-2xl border border-line bg-surface p-5 sm:p-6"
+    >
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span
           aria-hidden
@@ -24,7 +27,7 @@ export function ReviewCard({
           {review.authorName.charAt(0)}
         </span>
         <div className="min-w-0">
-          <p className="font-medium">{review.authorName}</p>
+          <p className="font-medium wrap-anywhere">{review.authorName}</p>
           <p className="text-xs text-muted">
             {formatDate(review.createdAt)}
             {review.editedAt && " · נערכה"}
@@ -44,7 +47,7 @@ export function ReviewCard({
           </Link>
         )}
       </div>
-      <p className="mt-3 whitespace-pre-line leading-relaxed text-pretty text-ink/85">{review.body}</p>
+      <p className="mt-3 whitespace-pre-line leading-relaxed text-pretty wrap-anywhere text-ink/85">{review.body}</p>
       {(review.amountPaid != null || review.experienceDate || !review.paid) && (
         <p className="mt-3 text-xs text-muted">
           {!review.paid && "לא רכש/ה מהחברה"}
@@ -56,10 +59,12 @@ export function ReviewCard({
 
       {review.reply && (
         <div className="mt-4 rounded-xl border-s-4 border-accent bg-surface-2 p-4">
-          <p className="text-sm font-semibold">
+          <p className="text-sm font-semibold wrap-anywhere">
             תגובת {company.name} <span className="font-normal text-muted">· {formatDate(review.reply.createdAt)}</span>
           </p>
-          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-ink/85">{review.reply.body}</p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed wrap-anywhere text-ink/85">
+            {review.reply.body}
+          </p>
         </div>
       )}
 

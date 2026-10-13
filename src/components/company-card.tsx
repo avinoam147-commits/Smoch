@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { categories, hasScore, MIN_RATINGS_FOR_SCORE } from "@/lib/format";
+import { hasScore, MIN_RATINGS_FOR_SCORE } from "@/lib/format";
 import type { Company } from "@/lib/types";
 import { Stars } from "./stars";
 import { ScoreBadge } from "./score-badge";
@@ -15,10 +15,10 @@ export function CompanyCard({ company }: { company: Company }) {
         <CompanyMark name={company.name} logoUrl={company.logoUrl} />
         <div className="min-w-0">
           <h3 className="truncate font-semibold underline-offset-4 group-hover:underline">{company.name}</h3>
-          <p className="truncate text-sm text-muted">{categories[company.category].label}</p>
+          <p className="truncate text-sm text-muted">{company.categoryLabel}</p>
         </div>
       </div>
-      {company.tagline && <p className="line-clamp-2 text-sm text-muted">{company.tagline}</p>}
+      {company.tagline && <p className="line-clamp-2 text-sm wrap-anywhere text-muted">{company.tagline}</p>}
       <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1">
         {hasScore(company.stats) ? (
           <>

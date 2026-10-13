@@ -76,6 +76,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      categories: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          label: string;
+          sort_order: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id: string;
+          label: string;
+          sort_order?: number;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          label?: string;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
       companies: {
         Row: {
           about: string;
@@ -147,7 +172,15 @@ export type Database = {
           updated_at?: string;
           website?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "companies_category_fkey";
+            columns: ["category"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       company_claims: {
         Row: {

@@ -343,9 +343,66 @@ await step("account: rename, edit own review, delete account", async () => {
   assert.equal(data.length, 0);
 });
 
+await step("admin: categories can be added, used and shown only when they have companies", async () => {
+  const p = await pageFor(admin);
+  await p.goto(`${BASE}/admin/categories`);
+  await p.locator('input[name="label"]:visible').fill("מוסכים");
+  await p.locator('input[name="id"]:visible').fill(`garages-${run}`);
+  await p.getByRole("button", { name: "הוספת קטגוריה" }).click();
+  await p.getByText("הקטגוריה נשמרה").waitFor();
+  await shot(p, "15-admin-categories");
+
+  const pub = await pageFor(null);
+  await pub.goto(`${BASE}/companies`);
+  await pub.getByRole("group", { name: "סינון לפי קטגוריה" }).waitFor();
+  assert.equal(await pub.getByRole("button", { name: "מוסכים" }).count(), 0, "empty category is hidden");
+
+  await p.goto(`${BASE}/admin/companies/new`);
+  await p.locator('input[name="name"]:visible').fill("מוסך הבדיקה");
+  await p.locator('input[name="slug"]:visible').fill(`garage-${run}`);
+  await p.locator('select[name="category"]:visible').selectOption(`garages-${run}`);
+  await p.getByRole("button", { name: "יצירת חברה" }).click();
+  await p.getByText("החברה נוצרה").waitFor();
+  await p.context().close();
+
+  await pub.goto(`${BASE}/companies`);
+  await pub.getByRole("button", { name: "מוסכים" }).click();
+  await pub.getByText("מוסך הבדיקה").waitFor();
+  await pub.context().close();
+});
+
+await step("layout: a long word with no spaces can't widen the page", async () => {
+  const eve = await makeUser("eve");
+  const p = await pageFor(eve, { width: 390, height: 844 });
+  await p.goto(`${BASE}/company/nachshon-trading-house/review`);
+  await p.getByRole("radio", { name: /3 כוכבים/ }).click();
+  await p.locator("#body").fill("ח".repeat(160) + "verylongwordwithoutanyspaces".repeat(6));
+  await p.getByRole("button", { name: "פרסום הביקורת" }).click();
+  await p.getByText("תודה, הביקורת פורסמה").waitFor();
+  for (const path of ["/", "/company/nachshon-trading-house"]) {
+    for (const width of [390, 1280]) {
+      await p.setViewportSize({ width, height: 900 });
+      await p.goto(`${BASE}${path}`);
+      await p.waitForLoadState("networkidle");
+      const w = await p.evaluate(() => document.documentElement.scrollWidth);
+      assert.ok(w <= width, `${path} at ${width}px: scrollWidth ${w}`);
+    }
+  }
+  await shot(p, "16-long-word");
+  await p.context().close();
+});
+
 await step("mobile: no horizontal scroll on key pages", async () => {
   const p = await pageFor(admin, { width: 390, height: 844 });
-  for (const path of ["/", "/companies", "/company/green-candle", "/admin", "/admin/reviews", "/admin/companies"]) {
+  for (const path of [
+    "/",
+    "/companies",
+    "/company/green-candle",
+    "/admin",
+    "/admin/reviews",
+    "/admin/companies",
+    "/admin/categories",
+  ]) {
     await p.goto(`${BASE}${path}`);
     await p.waitForLoadState("networkidle");
     const w = await p.evaluate(() => document.documentElement.scrollWidth);

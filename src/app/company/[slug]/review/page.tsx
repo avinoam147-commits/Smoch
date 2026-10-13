@@ -69,7 +69,7 @@ async function ReviewGate({ params }: { params: PageProps<"/company/[slug]/revie
       <Link href={`/company/${company.slug}`} className="text-sm text-muted hover:text-ink">
         → חזרה ל{company.name}
       </Link>
-      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-balance">
+      <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-balance wrap-anywhere">
         {defaults ? `עריכת הביקורת שלך על ${company.name}` : `איך היה עם ${company.name}?`}
       </h1>
       <p className="mt-2 text-muted">בחרו דירוג וספרו בכמה מילים איך היה. גם משפט אחד עוזר לאחרים להחליט.</p>

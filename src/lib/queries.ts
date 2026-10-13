@@ -4,8 +4,8 @@ import { connection } from "next/server";
 import { createPublicClient } from "./supabase/public";
 import { isSupabaseConfigured } from "./supabase/env";
 import type { Database } from "./supabase/database.types";
-import type { CategoryId, Company, CompanyStats, Review, ReviewWithCompany } from "./types";
-import { demoCompanies, demoReviews, demoReviewsWithCompany } from "./demo-data";
+import type { Category, Company, CompanyStats, Review, ReviewWithCompany } from "./types";
+import { demoCategories, demoCompanies, demoReviews, demoReviewsWithCompany } from "./demo-data";
 
 // Public reads. They run on every request (no server-side page cache), so a
 // new rating shows up immediately for everyone, on every server instance.
@@ -33,12 +33,13 @@ export function toStats(s: StatsRow | undefined | null): CompanyStats {
   };
 }
 
-export function toCompany(c: CompanyRow, s?: StatsRow | null): Company {
+export function toCompany(c: CompanyRow & { categories?: { label: string } | null }, s?: StatsRow | null): Company {
   return {
     id: c.id,
     slug: c.slug,
     name: c.name,
-    category: c.category as CategoryId,
+    category: c.category,
+    categoryLabel: c.categories?.label ?? c.category,
     tagline: c.tagline,
     about: c.about,
     website: c.website,
@@ -74,7 +75,7 @@ export function toReview(r: ReviewRow & { review_replies?: ReplyRow | ReplyRow[]
   };
 }
 
-async function withStats(rows: CompanyRow[]): Promise<Company[]> {
+async function withStats(rows: (CompanyRow & { categories?: { label: string } | null })[]): Promise<Company[]> {
   if (rows.length === 0) return [];
   const supabase = createPublicClient();
   const { data: stats, error } = await supabase
@@ -93,7 +94,11 @@ export const getPublishedCompanies = cache(async (): Promise<Company[]> => {
   await connection();
   if (!isSupabaseConfigured) return demoCompanies;
   const supabase = createPublicClient();
-  const { data, error } = await supabase.from("companies").select("*").eq("status", "published").order("name");
+  const { data, error } = await supabase
+    .from("companies")
+    .select("*, categories(label)")
+    .eq("status", "published")
+    .order("name");
   if (error) throw error;
   return withStats(data);
 });
@@ -104,7 +109,7 @@ export const getCompanyBySlug = cache(async (slug: string): Promise<Company | nu
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("companies")
-    .select("*")
+    .select("*, categories(label)")
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
@@ -148,4 +153,14 @@ export const getRecentReviews = cache(async (limit: number = 4): Promise<ReviewW
     .limit(limit);
   if (error) throw error;
   return data.map((r) => ({ ...toReview(r), company: { slug: r.companies.slug, name: r.companies.name } }));
+});
+
+/** All categories, in display order ("other" last). */
+export const getCategories = cache(async (): Promise<Category[]> => {
+  await connection();
+  if (!isSupabaseConfigured) return demoCategories;
+  const supabase = createPublicClient();
+  const { data, error } = await supabase.from("categories").select("*").order("sort_order").order("label");
+  if (error) throw error;
+  return data.map((c) => ({ id: c.id, label: c.label, description: c.description, sortOrder: c.sort_order }));
 });

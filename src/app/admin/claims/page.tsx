@@ -76,7 +76,7 @@ export default async function AdminClaims({ searchParams }: PageProps<"/admin/cl
                     </div>
                   )}
                 </dl>
-                {c.message && <p className="mt-2 rounded-xl bg-surface-2 p-3">{c.message}</p>}
+                {c.message && <p className="mt-2 rounded-xl bg-surface-2 p-3 wrap-anywhere">{c.message}</p>}
                 {c.admin_note && <p className="mt-2 text-xs text-muted">הערה: {c.admin_note}</p>}
                 {c.status === "pending" && (
                   <div className="mt-4 flex gap-2">

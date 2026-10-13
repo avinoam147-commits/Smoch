@@ -1,18 +1,3 @@
-import type { CategoryId } from "./types";
-
-export const categoryIds: CategoryId[] = ["courses", "signals", "mentoring", "algo"];
-
-export const categories: Record<CategoryId, { label: string; blurb: string }> = {
-  courses: { label: "קורסי מסחר", blurb: "קורסים מוקלטים ופרונטליים למסחר במניות, מט״ח וקריפטו" },
-  signals: { label: "קבוצות איתותים", blurb: "קבוצות בתשלום ששולחות המלצות קנייה ומכירה" },
-  mentoring: { label: "ליווי אישי", blurb: "מנטורים וליווי צמוד לסוחרים מתחילים" },
-  algo: { label: "בוטים ואלגו-טריידינג", blurb: "תוכנות ובוטים למסחר אוטומטי" },
-};
-
-export function isCategory(v: unknown): v is CategoryId {
-  return typeof v === "string" && (categoryIds as string[]).includes(v);
-}
-
 /**
  * Below this many ratings the score isn't shown: a handful of ratings can be
  * one unhappy customer or a few friends of the owner. Explained on the page.

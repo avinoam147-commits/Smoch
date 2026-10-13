@@ -425,6 +425,36 @@ test("stats: trust score is a weighted Bayesian average of published reviews", a
   assert.ok(Math.abs(data.trust_score - (30 + 15) / 13) < 1e-9);
 });
 
+test("categories: public to read, only admins manage them, companies must use one", async () => {
+  const { data: list } = await anon.from("categories").select("id").order("sort_order");
+  assert.ok(list.length >= 10);
+  assert.equal(list.at(-1).id, "other", "'other' is listed last");
+
+  const denied = await alice.client.from("categories").insert({ id: `x-${run}`, label: "ניסיון" });
+  assert.ok(denied.error, "users can't add categories");
+
+  const id = `garages-${run}`;
+  assert.ifError((await admin.client.from("categories").insert({ id, label: "מוסכים" })).error);
+  const bad = await alice.client
+    .from("companies")
+    .insert({ slug: `nocat-${run}`, name: "בלי קטגוריה", category: "does-not-exist" });
+  assert.equal(bad.error?.code, "23503", "unknown category is rejected");
+
+  const c = await admin.client
+    .from("companies")
+    .insert({ slug: `garage-${run}`, name: "מוסך בדיקה", category: id, status: "published" })
+    .select()
+    .single();
+  assert.ifError(c.error);
+  const blocked = await admin.client.from("categories").delete().eq("id", id);
+  assert.ok(blocked.error, "a category with companies can't be deleted");
+
+  const renamed = `car-garages-${run}`;
+  assert.ifError((await admin.client.from("categories").update({ id: renamed }).eq("id", id)).error);
+  const { data: moved } = await anon.from("companies").select("category").eq("id", c.data.id).single();
+  assert.equal(moved.category, renamed, "renaming a category id moves its companies");
+});
+
 test("banned users can't write", async () => {
   const eve = await makeUser("eve");
   await admin.client.from("profiles").update({ is_banned: true }).eq("id", eve.id);

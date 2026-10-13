@@ -8,8 +8,8 @@ import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyError } from "@/lib/errors";
 import { lookupRegistry } from "@/lib/registry";
-import { categoryIds, MIN_REVIEW_LENGTH } from "@/lib/format";
-import type { ActionState, CategoryId } from "@/lib/types";
+import { MIN_REVIEW_LENGTH } from "@/lib/format";
+import type { ActionState } from "@/lib/types";
 import { notifyClaimDecision, notifyCompanyDecision, notifyNewReview, notifyReceiptDecision } from "@/lib/notify";
 
 async function adminClient() {
@@ -44,7 +44,7 @@ const companySchema = z.object({
     .toLowerCase()
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "אותיות לטיניות קטנות, ספרות ומקפים בלבד")
     .max(80),
-  category: z.enum(categoryIds as [CategoryId, ...CategoryId[]]),
+  category: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "בחרו קטגוריה"),
   tagline: z.string().trim().max(160).default(""),
   about: z.string().trim().max(3000).default(""),
   website: z.preprocess(blankToNull, z.string().trim().max(200).nullable()),
@@ -373,4 +373,49 @@ export async function saveSettings(_: ActionState, formData: FormData): Promise<
   }
   refresh();
   return { ok: true, message: "ההגדרות נשמרו." };
+}
+
+// ---------------------------------------------------------------------------
+// Categories
+// ---------------------------------------------------------------------------
+
+const categorySchema = z.object({
+  originalId: z.string().optional(),
+  id: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "אותיות לטיניות קטנות, ספרות ומקפים בלבד")
+    .max(40),
+  label: z.string().trim().min(2, "שם קצר מדי").max(60),
+  description: z.string().trim().max(200).default(""),
+  sortOrder: z.coerce.number().int().min(0).max(100000),
+});
+
+export async function saveCategory(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await adminClient();
+  const parsed = categorySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const row = { id: v.id, label: v.label, description: v.description, sort_order: v.sortOrder };
+  const { error } = v.originalId
+    ? // Renaming the id cascades to companies (on update cascade).
+      await supabase.from("categories").update(row).eq("id", v.originalId)
+    : await supabase.from("categories").insert(row);
+  if (error) {
+    if (error.code === "23505") return { ok: false, fieldErrors: { id: "המזהה כבר קיים" } };
+    return { ok: false, message: friendlyError(error) };
+  }
+  refresh();
+  redirect(`/admin/categories?saved=${encodeURIComponent(v.id)}`);
+}
+
+export async function deleteCategory(id: string) {
+  const { supabase } = await adminClient();
+  const { count } = await supabase.from("companies").select("*", { count: "exact", head: true }).eq("category", id);
+  if (count) return { ok: false, message: `יש בקטגוריה ${count} חברות. העבירו אותן לקטגוריה אחרת לפני המחיקה.` };
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) return { ok: false, message: friendlyError(error) };
+  refresh();
+  return { ok: true };
 }

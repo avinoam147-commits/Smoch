@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { BadgeCheck, MessageSquareReply, ShieldCheck } from "lucide-react";
-import { categories, categoryIds, hasScore } from "@/lib/format";
-import { getPublishedCompanies, getRecentReviews } from "@/lib/queries";
+import { hasScore } from "@/lib/format";
+import { getCategories, getPublishedCompanies, getRecentReviews } from "@/lib/queries";
 import { SearchBox } from "@/components/search-box";
 import { CompanyCard } from "@/components/company-card";
 import { ReviewCard } from "@/components/review-card";
@@ -31,20 +31,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4">
-        <div className="flex flex-wrap gap-2">
-          {categoryIds.map((id) => (
-            <Link
-              key={id}
-              href={`/companies?category=${id}`}
-              className="pressable rounded-full border border-line bg-surface px-4 py-2 text-sm hover:border-ink/30"
-            >
-              {categories[id].label}
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <Suspense fallback={<SectionsSkeleton />}>
         <HomeSections />
       </Suspense>
@@ -54,7 +40,13 @@ export default function Home() {
 
 /** Live data: rankings, the trust principles and the latest reviews. */
 async function HomeSections() {
-  const [companies, recent] = await Promise.all([getPublishedCompanies(), getRecentReviews(4)]);
+  const [companies, recent, categories] = await Promise.all([
+    getPublishedCompanies(),
+    getRecentReviews(4),
+    getCategories(),
+  ]);
+  // Only categories that already have companies get a shortcut.
+  const usedCategories = categories.filter((cat) => companies.some((c) => c.category === cat.id));
   // Rankings only include companies whose score is public (enough ratings).
   const ranked = companies.filter((c) => hasScore(c.stats)).sort((a, b) => b.stats.trustScore - a.stats.trustScore);
   const top = ranked.slice(0, 3);
@@ -62,6 +54,22 @@ async function HomeSections() {
 
   return (
     <>
+      {usedCategories.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4">
+          <div className="flex flex-wrap gap-2">
+            {usedCategories.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/companies?category=${cat.id}`}
+                className="pressable rounded-full border border-line bg-surface px-4 py-2 text-sm hover:border-ink/30"
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {top.length > 0 && (
         <section className="mx-auto mt-14 max-w-6xl px-4">
           <SectionHeading title="הכי מומלצים" href="/companies?sort=top" />
