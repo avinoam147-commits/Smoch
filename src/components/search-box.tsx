@@ -25,7 +25,7 @@ export function SearchBox({ defaultValue = "", autoFocus = false }: { defaultVal
         autoFocus={autoFocus}
         type="search"
         enterKeyHint="search"
-        placeholder="שם של קורס, מנטור או קבוצת איתותים"
+        placeholder="שם של חברה, קורס או שירות"
         aria-label="חיפוש חברה"
         className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none placeholder:text-muted"
       />

@@ -17,13 +17,13 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pt-14 pb-12 sm:pt-20">
         <div className="max-w-2xl">
           <p className="mb-4 inline-flex rounded-full border border-line bg-surface px-3 py-1 text-sm text-muted">
-            קורסי מסחר · קבוצות איתותים · ליווי · בוטים
+            מסחר · דרופשיפינג · שיווק דיגיטלי · ליווי וקורסים אונליין
           </p>
           <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight text-balance sm:text-6xl">
-            לפני שמשלמים על קורס מסחר, שומעים מי שכבר שילם.
+            לפני שמשלמים על שירות באינטרנט, שומעים מי שכבר שילם.
           </h1>
           <p className="mt-5 text-lg text-muted text-pretty">
-            ביקורות ציבוריות של לקוחות מחוברים ומזוהים. בלי ביקורות קנויות ובלי הסרות בתשלום.
+            ביקורות של לקוחות אמיתיים על קורסים, ליווי ושירותים דיגיטליים. בלי ביקורות קנויות ובלי הסרות בתשלום.
           </p>
           <div className="mt-8 max-w-xl">
             <SearchBox />
@@ -96,7 +96,7 @@ async function HomeSections() {
         <section className="mx-auto mt-14 max-w-6xl px-4">
           <div className="rounded-2xl border border-dashed border-line p-10 text-center">
             <p className="font-semibold">עדיין אין חברות באתר</p>
-            <p className="mt-1 text-sm text-muted">מכירים קורס מסחר או קבוצת איתותים? הוסיפו אותם ראשונים.</p>
+            <p className="mt-1 text-sm text-muted">מכירים קורס, מנטור או שירות אונליין? הוסיפו אותו ראשונים.</p>
             <Link
               href="/add-company"
               className="pressable mt-5 inline-flex rounded-xl bg-accent px-5 py-2.5 font-medium text-accent-ink"

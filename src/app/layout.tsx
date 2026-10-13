@@ -15,10 +15,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   openGraph: { siteName: "סמוך", locale: "he_IL", type: "website" },
   title: {
-    default: "סמוך — ביקורות אמיתיות על קורסי מסחר",
+    default: "סמוך — ביקורות אמיתיות על שירותים וקורסים באינטרנט",
     template: "%s · סמוך",
   },
-  description: "דירוגים וביקורות ציבוריות על קורסי מסחר, קבוצות איתותים וליווי בישראל. לפני שמשלמים, בודקים.",
+  description:
+    "ביקורות ודירוגים של לקוחות אמיתיים על קורסים, ליווי ושירותים דיגיטליים בישראל: מסחר, דרופשיפינג, שיווק ועוד. לפני שמשלמים, בודקים.",
 };
 
 export const viewport: Viewport = {
