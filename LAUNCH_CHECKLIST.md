@@ -20,6 +20,8 @@
 - [x] **מדידת כניסות:** Vercel Web Analytics הופעל.
 - [ ] **Google Search Console:** לאמת את הדומיין ולשלוח את `/sitemap.xml`.
 
+- [ ] **למחוק את החברות לדוגמה:** להריץ ב-SQL Editor את `supabase/demo/remove_demo_companies.sql`.
+
 ## מומלץ
 
 - [ ] מיילים דרך Resend (התראות למשתמשים), כולל אימות הדומיין אצלם.

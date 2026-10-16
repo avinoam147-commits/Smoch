@@ -12,6 +12,11 @@ export function hasScore(stats: { reviewCount: number }) {
 }
 
 /** First words of a review, for lists and emails. */
+/** Sample companies for showing the site (slug "demo-..."): labelled, never indexed. */
+export function isDemoSlug(slug: string) {
+  return slug.startsWith("demo-");
+}
+
 export function excerpt(body: string | null | undefined, max = 60) {
   if (!body) return "";
   const t = body.replace(/\s+/g, " ").trim();

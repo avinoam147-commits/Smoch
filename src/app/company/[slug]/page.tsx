@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CalendarDays, ExternalLink, Hash, MapPin, PenLine, Wallet, AtSign } from "lucide-react";
-import { displayHost, externalHref, hasScore, MIN_RATINGS_FOR_SCORE, scoreTone } from "@/lib/format";
+import { displayHost, externalHref, hasScore, isDemoSlug, MIN_RATINGS_FOR_SCORE, scoreTone } from "@/lib/format";
 import { getCompanyBySlug, getCompanyReviews } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { siteUrl } from "@/lib/site";
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: PageProps<"/company/[slug]">)
       ? `${reviewCount} דירוגים של ${company.name}. ציון אמינות ${trustScore.toFixed(1)} מתוך 5. ${company.tagline}`
       : `ביקורות ודירוג על ${company.name}. ${company.tagline}`,
     alternates: { canonical: `/company/${company.slug}` },
+    ...(isDemoSlug(company.slug) && { robots: { index: false, follow: false } }),
   };
 }
 
@@ -47,7 +48,7 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
 
   return (
     <CompanyViewerProvider companyId={company.id} enabled={isSupabaseConfigured}>
-      <JsonLd company={company} reviews={reviews} />
+      {!isDemoSlug(company.slug) && <JsonLd company={company} reviews={reviews} />}
       <div className="mx-auto max-w-6xl px-4 pt-8">
         <nav className="text-sm text-muted" aria-label="פירורי לחם">
           <Link href="/companies" className="hover:text-ink">
@@ -58,6 +59,12 @@ async function CompanyContent({ params }: { params: PageProps<"/company/[slug]">
             {company.categoryLabel}
           </Link>
         </nav>
+
+        {isDemoSlug(company.slug) && (
+          <p className="mt-4 rounded-2xl border border-line bg-surface px-4 py-3 text-sm text-muted">
+            זו חברה לדוגמה, שנוספה כדי להמחיש איך האתר עובד. החברה, הביקורות והדירוגים בדויים.
+          </p>
+        )}
 
         <section className="mt-5 rounded-3xl border border-line bg-surface p-6 sm:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
